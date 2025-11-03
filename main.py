@@ -613,12 +613,19 @@ class ScalpingBot:
             
             # Send URL via Discord
             if self.notifier.is_configured():
-                self.notifier.send(
-                    f"🌐 **Dashboard Online**\n"
-                    f"Local: http://localhost:8001\n"
-                    f"Public: {public_url}\n"
-                    f"Access from anywhere!"
-                )
+                from datetime import datetime
+                embed = {
+                    "title": "🌐 Dashboard Online",
+                    "description": "Trading dashboard is now accessible",
+                    "color": 5763719,  # Green
+                    "fields": [
+                        {"name": "🏠 Local Access", "value": f"`http://localhost:8001`", "inline": False},
+                        {"name": "🌍 Public Access", "value": f"[Click Here]({public_url})", "inline": False},
+                    ],
+                    "footer": {"text": "Scalp Bot | Dashboard"},
+                    "timestamp": datetime.utcnow().isoformat()
+                }
+                self.notifier.send("", embeds=[embed])
             
             # Store for API access
             self.dashboard_url = str(public_url)
@@ -976,7 +983,19 @@ def api_add_to_watchlist():
             yaml.dump(bot.config, f, default_flow_style=False)
         
         logger.info("Added %s to watchlist", ticker)
-        bot.notifier.send(f"✅ Added **{ticker}** to watchlist")
+        from datetime import datetime
+        embed = {
+            "title": "✅ Watchlist Updated",
+            "description": f"Added **{ticker}** to watchlist",
+            "color": 3066993,
+            "fields": [
+                {"name": "Ticker", "value": f"`{ticker}`", "inline": True},
+                {"name": "Total Tickers", "value": f"`{len(watchlist)}`", "inline": True},
+            ],
+            "footer": {"text": "Scalp Bot | Watchlist Manager"},
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        bot.notifier.send("", embeds=[embed])
         
         return jsonify({
             'success': True,
@@ -1016,7 +1035,19 @@ def api_remove_from_watchlist():
             yaml.dump(bot.config, f, default_flow_style=False)
         
         logger.info("Removed %s from watchlist", ticker)
-        bot.notifier.send(f"🗑️ Removed **{ticker}** from watchlist")
+        from datetime import datetime
+        embed = {
+            "title": "🗑️ Watchlist Updated",
+            "description": f"Removed **{ticker}** from watchlist",
+            "color": 15105570,
+            "fields": [
+                {"name": "Ticker", "value": f"`{ticker}`", "inline": True},
+                {"name": "Total Tickers", "value": f"`{len(watchlist)}`", "inline": True},
+            ],
+            "footer": {"text": "Scalp Bot | Watchlist Manager"},
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        bot.notifier.send("", embeds=[embed])
         
         return jsonify({
             'success': True,

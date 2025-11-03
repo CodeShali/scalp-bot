@@ -33,13 +33,35 @@ class DiscordNotifier:
             self.logger.exception("Error sending Discord notification: %s", exc)
 
     def alert_ticker_selection(self, ticker: str, score: float, metrics: Dict[str, float]) -> None:
-        message = f"**Ticker of the Day:** {ticker}\nScore: {score:.3f}\n" + "\n".join(
-            f"{key}: {value:.3f}" for key, value in metrics.items()
-        )
-        self.send(message)
+        embed = {
+            "title": "🎯 Ticker of the Day Selected",
+            "description": f"**{ticker}** has been selected for today's trading",
+            "color": 3447003,  # Blue
+            "fields": [
+                {"name": "📊 Score", "value": f"`{score:.3f}`", "inline": True},
+                {"name": "📈 Volume", "value": f"`{metrics.get('volume', 0):.0f}`", "inline": True},
+                {"name": "💹 Volatility", "value": f"`{metrics.get('volatility', 0):.3f}`", "inline": True},
+            ],
+            "footer": {"text": "Scalp Bot | Pre-Market Scan"},
+            "timestamp": self._get_timestamp()
+        }
+        self.send("", embeds=[embed])
 
     def alert_signal(self, ticker: str, direction: str, reason: str) -> None:
-        self.send(f"Signal detected for {ticker}: **{direction.upper()}** ({reason})")
+        color = 5763719 if direction.lower() == 'call' else 15548997  # Green for calls, red for puts
+        emoji = "📈" if direction.lower() == 'call' else "📉"
+        embed = {
+            "title": f"{emoji} Trading Signal Detected",
+            "description": f"**{ticker}** - {direction.upper()}",
+            "color": color,
+            "fields": [
+                {"name": "Direction", "value": f"`{direction.upper()}`", "inline": True},
+                {"name": "Reason", "value": reason, "inline": False},
+            ],
+            "footer": {"text": "Scalp Bot | Signal Generator"},
+            "timestamp": self._get_timestamp()
+        }
+        self.send("", embeds=[embed])
 
     def alert_order_filled(
         self,
@@ -49,11 +71,21 @@ class DiscordNotifier:
         contracts: int,
         fill_price: float,
     ) -> None:
-        message = (
-            f"Order filled: {direction.upper()} {contracts}x {option_symbol} ({ticker})\n"
-            f"Fill price: ${fill_price:.2f}"
-        )
-        self.send(message)
+        embed = {
+            "title": "✅ Order Filled",
+            "description": f"Successfully entered position in **{ticker}**",
+            "color": 3066993,  # Green
+            "fields": [
+                {"name": "📋 Contract", "value": f"`{option_symbol}`", "inline": False},
+                {"name": "📊 Direction", "value": f"`{direction.upper()}`", "inline": True},
+                {"name": "🔢 Quantity", "value": f"`{contracts}x`", "inline": True},
+                {"name": "💰 Fill Price", "value": f"`${fill_price:.2f}`", "inline": True},
+                {"name": "💵 Total Cost", "value": f"`${fill_price * contracts * 100:.2f}`", "inline": True},
+            ],
+            "footer": {"text": "Scalp Bot | Order Execution"},
+            "timestamp": self._get_timestamp()
+        }
+        self.send("", embeds=[embed])
 
     def alert_exit(
         self,
@@ -64,14 +96,41 @@ class DiscordNotifier:
         pnl_pct: float,
         reason: str,
     ) -> None:
-        message = (
-            f"Exit triggered for {option_symbol} ({ticker})\n"
-            f"Contracts: {contracts}\n"
-            f"Exit price: ${exit_price:.2f}\n"
-            f"P/L: {pnl_pct:.2f}%\n"
-            f"Reason: {reason}"
-        )
-        self.send(message)
+        color = 3066993 if pnl_pct >= 0 else 15158332  # Green for profit, red for loss
+        emoji = "🎉" if pnl_pct >= 0 else "⚠️"
+        status = "PROFIT" if pnl_pct >= 0 else "LOSS"
+        
+        embed = {
+            "title": f"{emoji} Position Closed - {status}",
+            "description": f"Exited position in **{ticker}**",
+            "color": color,
+            "fields": [
+                {"name": "📋 Contract", "value": f"`{option_symbol}`", "inline": False},
+                {"name": "🔢 Quantity", "value": f"`{contracts}x`", "inline": True},
+                {"name": "💰 Exit Price", "value": f"`${exit_price:.2f}`", "inline": True},
+                {"name": "📊 P/L", "value": f"`{pnl_pct:+.2f}%`", "inline": True},
+                {"name": "📝 Exit Reason", "value": reason, "inline": False},
+            ],
+            "footer": {"text": "Scalp Bot | Position Management"},
+            "timestamp": self._get_timestamp()
+        }
+        self.send("", embeds=[embed])
 
     def alert_error(self, context: str, error: Exception) -> None:
-        self.send(f"Error in {context}: {error}")
+        embed = {
+            "title": "🚨 Error Alert",
+            "description": f"An error occurred in **{context}**",
+            "color": 15158332,  # Red
+            "fields": [
+                {"name": "Error Type", "value": f"`{type(error).__name__}`", "inline": True},
+                {"name": "Error Message", "value": f"```{str(error)[:1000]}```", "inline": False},
+            ],
+            "footer": {"text": "Scalp Bot | Error Handler"},
+            "timestamp": self._get_timestamp()
+        }
+        self.send("", embeds=[embed])
+    
+    def _get_timestamp(self) -> str:
+        """Get current timestamp in ISO format for Discord embeds."""
+        from datetime import datetime
+        return datetime.utcnow().isoformat()
