@@ -1,11 +1,9 @@
 alpaca-py
 APScheduler
-discord.py
 Flask
 numpy
 openai
 pandas
-pyngrok
 PyYAML
 requests
 ta

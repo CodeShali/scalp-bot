@@ -1,5 +1,5 @@
 [Unit]
-Description=Options Scalping Bot with Web Dashboard and ngrok
+Description=TARA Options Scalping Bot
 After=network-online.target
 Wants=network-online.target
 
@@ -9,14 +9,11 @@ User=pi
 WorkingDirectory=/home/pi/scalp-bot
 
 # Environment
-Environment="PATH=/home/pi/scalp-bot/venv/bin:/usr/local/bin:/usr/bin:/sbin:/bin"
+Environment="PATH=/home/pi/scalp-bot/venv/bin:/usr/local/bin:/usr/bin:/bin"
 Environment="HOME=/home/pi"
 
-# Start bot (script handles ngrok startup)
-ExecStart=/home/pi/scalp-bot/start_bot.sh
-
-# Stop ngrok when service stops
-ExecStopPost=/home/pi/scalp-bot/stop_bot.sh
+# Just run main.py - it handles everything
+ExecStart=/home/pi/scalp-bot/venv/bin/python3 main.py
 
 # Restart on failure
 Restart=always
