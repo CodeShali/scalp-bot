@@ -32,6 +32,8 @@ logger = logging.getLogger(__name__)
 # Flask app for web dashboard
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'scalp-bot-dashboard-secret'
+app.config['TEMPLATES_AUTO_RELOAD'] = True  # Force template reload
+app.jinja_env.auto_reload = True
 
 # Suppress Flask logs
 log = logging.getLogger('werkzeug')
