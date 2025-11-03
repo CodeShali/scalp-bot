@@ -101,12 +101,33 @@ function updateDashboard() {
             const tickerInfo = document.getElementById('tickerInfo');
             if (data.ticker_of_day) {
                 const ticker = data.ticker_of_day;
+                const metrics = ticker.metrics || {};
+                const selectionTime = ticker.selection_time ? new Date(ticker.selection_time).toLocaleString() : 'N/A';
+                
+                let metricsHtml = '';
+                if (Object.keys(metrics).length > 0) {
+                    metricsHtml = '<div class="ticker-metrics">';
+                    for (const [key, value] of Object.entries(metrics)) {
+                        const label = key.replace(/_/g, ' ').toUpperCase();
+                        const formattedValue = typeof value === 'number' ? value.toFixed(2) : value;
+                        metricsHtml += `
+                            <div class="ticker-metric">
+                                <div class="ticker-metric-label">${label}</div>
+                                <div class="ticker-metric-value">${formattedValue}</div>
+                            </div>
+                        `;
+                    }
+                    metricsHtml += '</div>';
+                }
+                
                 tickerInfo.innerHTML = `
-                    <div style="text-align: center;">
-                        <div class="ticker-badge">${ticker.symbol}</div>
-                        <div style="margin-top: 12px; color: #666666; font-size: 12px;">
-                            Score: ${ticker.score.toFixed(2)}
+                    <div class="ticker-selection">
+                        <div class="ticker-selection-header">
+                            <div class="ticker-symbol">${ticker.symbol}</div>
+                            <div class="ticker-score">Score: ${ticker.score.toFixed(3)}</div>
                         </div>
+                        ${metricsHtml}
+                        <div class="selection-time">Selected: ${selectionTime}</div>
                     </div>
                 `;
             } else {
