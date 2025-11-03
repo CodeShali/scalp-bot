@@ -9,22 +9,22 @@ User=pi
 WorkingDirectory=/home/pi/scalp-bot
 
 # Include ngrok in PATH
-Environment="PATH=/home/pi/scalp-bot/venv/bin:/usr/local/bin:/usr/bin:/bin"
+Environment="PATH=/home/pi/scalp-bot/venv/bin:/usr/local/bin:/usr/bin:/sbin:/bin"
 Environment="HOME=/home/pi"
 
 # Kill any existing ngrok processes before starting
-ExecStartPre=/bin/bash -c 'pkill -9 ngrok || true'
+ExecStartPre=/bin/bash -c '/usr/bin/pkill -9 ngrok 2>/dev/null || /bin/killall -9 ngrok 2>/dev/null || true'
 ExecStartPre=/bin/sleep 2
 
 # Start ngrok in background first
-ExecStartPre=/bin/bash -c 'nohup ngrok http 8001 > /dev/null 2>&1 &'
+ExecStartPre=/bin/bash -c 'ngrok http 8001 </dev/null >/dev/null 2>&1 &'
 ExecStartPre=/bin/sleep 5
 
 # Start the bot (will detect ngrok tunnel)
 ExecStart=/home/pi/scalp-bot/venv/bin/python3 /home/pi/scalp-bot/main.py
 
 # Stop ngrok when service stops
-ExecStopPost=/bin/bash -c 'pkill -9 ngrok || true'
+ExecStopPost=/bin/bash -c '/usr/bin/pkill -9 ngrok 2>/dev/null || /bin/killall -9 ngrok 2>/dev/null || true'
 
 # Restart on failure
 Restart=always
