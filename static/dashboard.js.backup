@@ -244,73 +244,19 @@ function updateDashboard() {
         });
     
     // Fetch logs
-    if (window.logsPaused) return;
-    
-    fetch('/api/logs?lines=100')
+    fetch('/api/logs?lines=30')
         .then(response => response.json())
         .then(data => {
-            window.allLogs = data;
-            renderLogs();
-            updateLogStats();
+            const logsContainer = document.getElementById('logsContainer');
+            logsContainer.innerHTML = data.map(line => {
+                let className = 'log-line';
+                if (line.includes('ERROR')) className += ' log-error';
+                else if (line.includes('WARNING')) className += ' log-warning';
+                else if (line.includes('INFO')) className += ' log-info';
+                return `<div class="${className}">${line.trim()}</div>`;
+            }).join('');
+            logsContainer.scrollTop = logsContainer.scrollHeight;
         });
-}
-
-function renderLogs() {
-    const logsContainer = document.getElementById('logsContainer');
-    const searchTerm = document.getElementById('logSearch')?.value.toLowerCase() || '';
-    const filterLevel = document.getElementById('logFilter')?.value || 'all';
-    
-    let logs = window.allLogs || [];
-    
-    // Apply filters
-    logs = logs.filter(line => {
-        if (filterLevel !== 'all' && !line.includes(`[${filterLevel}]`)) return false;
-        if (searchTerm && !line.toLowerCase().includes(searchTerm)) return false;
-        return true;
-    });
-    
-    if (logs.length === 0) {
-        logsContainer.innerHTML = '<div class="log-line"><span class="log-message">No logs match filters</span></div>';
-        return;
-    }
-    
-    logsContainer.innerHTML = logs.map(line => {
-        const match = line.match(/^(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2})\s+\[(\w+)\]\s+(.+)$/);
-        if (!match) return `<div class="log-line"><span class="log-message">${line}</span></div>`;
-        
-        const [, timestamp, level, message] = match;
-        const time = timestamp.split(' ')[1];
-        const icon = {INFO: 'ℹ️', WARNING: '⚠️', ERROR: '❌', DEBUG: '🔧'}[level] || '📝';
-        const highlighted = searchTerm ? message.replace(new RegExp(`(${searchTerm})`, 'gi'), '<mark>$1</mark>') : message;
-        
-        return `
-            <div class="log-line">
-                <span class="log-timestamp">${time}</span>
-                <span class="log-level log-level-${level}">${icon} ${level}</span>
-                <span class="log-message">${highlighted}</span>
-            </div>
-        `;
-    }).join('');
-    
-    if (!searchTerm && filterLevel === 'all') {
-        logsContainer.scrollTop = logsContainer.scrollHeight;
-    }
-}
-
-function updateLogStats() {
-    const logs = window.allLogs || [];
-    const stats = {total: logs.length, INFO: 0, WARNING: 0, ERROR: 0};
-    
-    logs.forEach(line => {
-        if (line.includes('[INFO]')) stats.INFO++;
-        else if (line.includes('[WARNING]')) stats.WARNING++;
-        else if (line.includes('[ERROR]')) stats.ERROR++;
-    });
-    
-    document.getElementById('totalLogs').textContent = stats.total;
-    document.getElementById('infoCount').textContent = stats.INFO;
-    document.getElementById('warningCount').textContent = stats.WARNING;
-    document.getElementById('errorCount').textContent = stats.ERROR;
 }
 
 // Initialize when DOM is ready
@@ -367,36 +313,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
     
-    // Log controls
-    window.logsPaused = false;
-    window.allLogs = [];
-    
-    document.getElementById('logSearch')?.addEventListener('input', renderLogs);
-    document.getElementById('logFilter')?.addEventListener('change', renderLogs);
-    
-    document.getElementById('pauseLogs')?.addEventListener('click', () => {
-        window.logsPaused = !window.logsPaused;
-        const btn = document.getElementById('pauseLogs');
-        btn.textContent = window.logsPaused ? '▶️ Resume' : '⏸️ Pause';
-    });
-    
-    document.getElementById('clearLogs')?.addEventListener('click', () => {
-        window.allLogs = [];
-        renderLogs();
-        updateLogStats();
-    });
-    
-    document.getElementById('downloadLogs')?.addEventListener('click', () => {
-        const blob = new Blob([window.allLogs.join('\n')], {type: 'text/plain'});
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `tara-logs-${new Date().toISOString().slice(0,10)}.txt`;
-        a.click();
-        URL.revokeObjectURL(url);
-    });
-    
-    // Settings modal handlers
+    // Start dashboard updates
     loadWatchlist();
     updateDashboard();
     setInterval(updateDashboard, 5000); // Refresh every 5 seconds

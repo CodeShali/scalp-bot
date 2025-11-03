@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TARA | Trading Assistant</title>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/static/dashboard.css?v=12">
+    <link rel="stylesheet" href="/static/dashboard.css?v=13">
 </head>
 <body>
     <canvas id="matrix-bg"></canvas>
@@ -132,7 +132,28 @@
         
         <!-- System Logs -->
         <div class="card">
-            <div class="card-title">SYSTEM LOGS</div>
+            <div class="card-title">
+                SYSTEM LOGS
+                <div class="log-controls">
+                    <input type="text" id="logSearch" placeholder="🔍 Search logs..." class="log-search">
+                    <select id="logFilter" class="log-filter">
+                        <option value="all">All Levels</option>
+                        <option value="INFO">ℹ️ Info</option>
+                        <option value="WARNING">⚠️ Warning</option>
+                        <option value="ERROR">❌ Error</option>
+                        <option value="DEBUG">🔧 Debug</option>
+                    </select>
+                    <button id="clearLogs" class="btn-mini">🗑️ Clear</button>
+                    <button id="pauseLogs" class="btn-mini">⏸️ Pause</button>
+                    <button id="downloadLogs" class="btn-mini">💾 Download</button>
+                </div>
+            </div>
+            <div class="logs-stats">
+                <span class="log-stat">Total: <span id="totalLogs">0</span></span>
+                <span class="log-stat log-stat-info">Info: <span id="infoCount">0</span></span>
+                <span class="log-stat log-stat-warning">Warnings: <span id="warningCount">0</span></span>
+                <span class="log-stat log-stat-error">Errors: <span id="errorCount">0</span></span>
+            </div>
             <div class="logs-container" id="logsContainer">
                 <div class="log-line loading">LOADING SYSTEM LOGS...</div>
             </div>
@@ -212,6 +233,6 @@
     </div>
     
     <script src="/static/matrix.js"></script>
-    <script src="/static/dashboard.js?v=6"></script>
+    <script src="/static/dashboard.js?v=7"></script>
 </body>
 </html>
