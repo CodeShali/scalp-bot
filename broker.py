@@ -229,3 +229,40 @@ class BrokerClient:
         except Exception as exc:
             self.logger.error("Failed to fetch market hours: %s", exc)
             raise
+    
+    def get_news(self, symbol: str, start: Optional[datetime] = None, end: Optional[datetime] = None, limit: int = 50) -> List[Dict[str, Any]]:
+        """Get news articles for a symbol from Alpaca News API.
+        
+        Args:
+            symbol: Stock symbol
+            start: Start datetime for news (default: 24 hours ago)
+            end: End datetime for news (default: now)
+            limit: Maximum number of articles (default: 50)
+            
+        Returns:
+            List of news articles with headline, summary, author, created_at, url, symbols, sentiment
+        """
+        try:
+            if start is None:
+                start = datetime.utcnow() - timedelta(hours=24)
+            if end is None:
+                end = datetime.utcnow()
+            
+            # Alpaca News API endpoint
+            news = self.client.get_news(symbol, start=start.isoformat(), end=end.isoformat(), limit=limit)
+            
+            articles = []
+            for article in news:
+                articles.append({
+                    'headline': article.headline if hasattr(article, 'headline') else article.get('headline', ''),
+                    'summary': article.summary if hasattr(article, 'summary') else article.get('summary', ''),
+                    'author': article.author if hasattr(article, 'author') else article.get('author', ''),
+                    'created_at': article.created_at if hasattr(article, 'created_at') else article.get('created_at', ''),
+                    'url': article.url if hasattr(article, 'url') else article.get('url', ''),
+                    'symbols': article.symbols if hasattr(article, 'symbols') else article.get('symbols', []),
+                })
+            
+            return articles
+        except Exception as exc:
+            self.logger.warning("Failed to fetch news for %s: %s", symbol, exc)
+            return []

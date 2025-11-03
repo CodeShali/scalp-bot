@@ -99,6 +99,9 @@ class TickerScanner:
         iv_rank = self._get_iv_rank(symbol)
         option_open_interest = self._get_option_open_interest(symbol)
         atr = self._get_atr(symbol, period=14)
+        
+        # Get news sentiment
+        news_sentiment, news_volume = self._get_news_sentiment(symbol)
 
         # Normalize metrics to 0-100 scale for weighted scoring
         metrics = {
@@ -107,6 +110,8 @@ class TickerScanner:
             "iv_rank": min(100.0, max(0.0, iv_rank)),
             "option_open_interest": min(100.0, max(0.0, option_open_interest / 1000)),  # Scale OI
             "atr": min(100.0, max(0.0, atr * 10)),  # Scale ATR
+            "news_sentiment": min(100.0, max(0.0, (news_sentiment + 1) * 50)),  # Convert -1 to +1 range to 0-100
+            "news_volume": min(100.0, max(0.0, news_volume * 5)),  # Scale news count
         }
 
         # Apply hard filters
@@ -237,3 +242,51 @@ class TickerScanner:
         except Exception as exc:
             self.logger.warning("Failed to calculate ATR for %s: %s", symbol, exc)
             return 0.0
+    
+    def _get_news_sentiment(self, symbol: str) -> tuple[float, int]:
+        """Calculate news sentiment and volume for a symbol.
+        
+        Returns:
+            (sentiment_score, news_count)
+            sentiment_score: -1.0 (very negative) to +1.0 (very positive)
+            news_count: number of articles in last 24 hours
+        """
+        try:
+            # Get news from last 24 hours
+            articles = self.broker.get_news(symbol, limit=50)
+            
+            if not articles:
+                return 0.0, 0  # Neutral sentiment, no news
+            
+            # Simple sentiment analysis based on keywords
+            positive_keywords = ['beat', 'surge', 'gain', 'up', 'high', 'profit', 'growth', 'strong', 
+                               'upgrade', 'buy', 'bullish', 'positive', 'record', 'success', 'win']
+            negative_keywords = ['miss', 'drop', 'fall', 'down', 'low', 'loss', 'decline', 'weak',
+                               'downgrade', 'sell', 'bearish', 'negative', 'concern', 'fail', 'lawsuit']
+            
+            sentiment_scores = []
+            for article in articles:
+                headline = (article.get('headline', '') + ' ' + article.get('summary', '')).lower()
+                
+                positive_count = sum(1 for word in positive_keywords if word in headline)
+                negative_count = sum(1 for word in negative_keywords if word in headline)
+                
+                # Calculate article sentiment (-1 to +1)
+                if positive_count + negative_count > 0:
+                    article_sentiment = (positive_count - negative_count) / (positive_count + negative_count)
+                else:
+                    article_sentiment = 0.0
+                
+                sentiment_scores.append(article_sentiment)
+            
+            # Average sentiment across all articles
+            avg_sentiment = sum(sentiment_scores) / len(sentiment_scores) if sentiment_scores else 0.0
+            news_count = len(articles)
+            
+            self.logger.debug("%s news: %d articles, sentiment: %.2f", symbol, news_count, avg_sentiment)
+            
+            return avg_sentiment, news_count
+            
+        except Exception as exc:
+            self.logger.warning("Failed to calculate news sentiment for %s: %s", symbol, exc)
+            return 0.0, 0

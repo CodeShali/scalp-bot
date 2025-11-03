@@ -32,11 +32,13 @@ watchlist:
 scanning:
   run_time: "08:30"  # ET time for daily scan
   weights:
-    premarket_volume: 0.3
-    gap_percent: 0.3
-    iv_rank: 0.2
-    option_open_interest: 0.1
-    atr: 0.1
+    premarket_volume: 0.25
+    gap_percent: 0.20
+    iv_rank: 0.15
+    option_open_interest: 0.10
+    atr: 0.10
+    news_sentiment: 0.15  # News sentiment score (-1 to +1)
+    news_volume: 0.05     # Number of news articles
   thresholds:
     min_premarket_volume: 100000
 
