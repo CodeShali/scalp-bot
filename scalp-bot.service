@@ -1,17 +1,26 @@
 [Unit]
-Description=Options Scalping Bot with Web Dashboard
+Description=Options Scalping Bot with Web Dashboard and ngrok
 After=network.target
 
 [Service]
 Type=simple
 User=pi
 WorkingDirectory=/home/pi/scalp-bot
-Environment="PATH=/home/pi/scalp-bot/venv/bin"
+
+# Include ngrok in PATH (usually in /usr/local/bin or /usr/bin)
+Environment="PATH=/home/pi/scalp-bot/venv/bin:/usr/local/bin:/usr/bin:/bin"
+
+# Start the bot (will automatically start ngrok service)
 ExecStart=/home/pi/scalp-bot/venv/bin/python3 /home/pi/scalp-bot/main.py
+
+# Restart on failure
 Restart=always
 RestartSec=10
+
+# Logging
 StandardOutput=journal
 StandardError=journal
+SyslogIdentifier=scalp-bot
 
 # Resource limits
 LimitNOFILE=65536
