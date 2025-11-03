@@ -6,6 +6,7 @@ from typing import Any, Dict, List, Optional
 import pytz
 from alpaca_trade_api import REST
 from alpaca_trade_api.common import URL
+from alpaca.trading.client import TradingClient
 
 
 class BrokerClient:
@@ -27,7 +28,15 @@ class BrokerClient:
         if not self.api_key_id or not self.api_secret_key:
             raise ValueError("Alpaca API keys must be provided in config.yaml")
 
+        # Old SDK for market data
         self.client = REST(self.api_key_id, self.api_secret_key, self.base_url, api_version="v2")
+        
+        # New SDK for options data
+        self.trading_client = TradingClient(
+            self.api_key_id, 
+            self.api_secret_key, 
+            paper=(self.mode == "paper")
+        )
 
     # -------------------- Market Data --------------------
     def get_latest_bar(self, symbol: str) -> Dict[str, Any]:
@@ -47,11 +56,22 @@ class BrokerClient:
         end: Optional[datetime] = None,
         limit: Optional[int] = None,
     ) -> List[Dict[str, Any]]:
+        # Convert datetime to ISO format string for Alpaca API (without microseconds)
+        if isinstance(start, datetime):
+            start_str = start.replace(microsecond=0).isoformat()
+        else:
+            start_str = start
+            
+        if isinstance(end, datetime) and end:
+            end_str = end.replace(microsecond=0).isoformat()
+        else:
+            end_str = None
+        
         bars = self.client.get_bars(
             symbol,
             timeframe,
-            start=start,
-            end=end,
+            start=start_str,
+            end=end_str,
             limit=limit,
             adjustment="raw",
             feed=self.data_feed,
@@ -125,18 +145,46 @@ class BrokerClient:
     def get_option_chain(self, symbol: str, expiration: Optional[str] = None) -> List[Dict[str, Any]]:
         """Fetch option chain for underlying symbol."""
         try:
-            # Note: Alpaca's option chain API may have different methods
-            # This implementation assumes get_option_chain exists
-            if hasattr(self.client, 'get_option_chain'):
-                chain = self.client.get_option_chain(symbol, status="active", expiration=expiration)
-                return [option._raw if hasattr(option, '_raw') else option for option in chain]
+            from alpaca.trading.requests import GetOptionContractsRequest
+            from datetime import datetime, timedelta
+            
+            # Get 0DTE and 1DTE options
+            if expiration:
+                exp_date = datetime.fromisoformat(expiration).date()
+                request = GetOptionContractsRequest(
+                    underlying_symbols=[symbol],
+                    status='active',
+                    expiration_date=exp_date,
+                    limit=200
+                )
             else:
-                # Fallback: construct option chain from option contracts API
-                self.logger.warning("Option chain API not available, using fallback method")
-                # This would need to be implemented based on Alpaca's actual API
-                return []
+                # Get nearest expirations (next 5 days to catch weekly options)
+                request = GetOptionContractsRequest(
+                    underlying_symbols=[symbol],
+                    status='active',
+                    expiration_date_gte=datetime.now().date(),
+                    expiration_date_lte=(datetime.now() + timedelta(days=5)).date(),
+                    limit=200
+                )
+            
+            response = self.trading_client.get_option_contracts(request)
+            contracts = response.option_contracts
+            
+            # Convert to dict format
+            chain = []
+            for contract in contracts:
+                chain.append({
+                    'symbol': contract.symbol,
+                    'strike_price': float(contract.strike_price),
+                    'option_type': contract.type,
+                    'expiration_date': str(contract.expiration_date),
+                    'open_interest': contract.open_interest if contract.open_interest else 0,
+                    'size': contract.size,
+                })
+            
+            return chain
         except Exception as exc:
-            self.logger.error("Failed to fetch option chain for %s: %s", symbol, exc)
+            self.logger.warning("Failed to fetch option chain for %s: %s", symbol, exc)
             return []
 
     def get_option_quote(self, option_symbol: str) -> Optional[Dict[str, Any]]:
@@ -244,12 +292,20 @@ class BrokerClient:
         """
         try:
             if start is None:
-                start = datetime.utcnow() - timedelta(hours=24)
+                start = datetime.now(pytz.UTC) - timedelta(hours=24)
             if end is None:
-                end = datetime.utcnow()
+                end = datetime.now(pytz.UTC)
             
-            # Alpaca News API endpoint
-            news = self.client.get_news(symbol, start=start.isoformat(), end=end.isoformat(), limit=limit)
+            # Ensure timezone aware
+            if start.tzinfo is None:
+                start = pytz.UTC.localize(start)
+            if end.tzinfo is None:
+                end = pytz.UTC.localize(end)
+            
+            # Alpaca News API endpoint (remove microseconds from timestamps)
+            start_str = start.replace(microsecond=0).isoformat()
+            end_str = end.replace(microsecond=0).isoformat()
+            news = self.client.get_news(symbol, start=start_str, end=end_str, limit=limit)
             
             articles = []
             for article in news:

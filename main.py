@@ -52,9 +52,7 @@ class ScalpingBot:
         
         ScalpingBot._instance = self  # Store for dashboard access
 
-        notifications_cfg = self.config.get("notifications", {})
-        webhook_url = notifications_cfg.get("discord_webhook_url")
-        self.notifier = DiscordNotifier(webhook_url)
+        self.notifier = DiscordNotifier(self.config)
 
         self.broker = BrokerClient(self.config)
         self.scanner = TickerScanner(self.broker, self.notifier, self.config)

@@ -79,6 +79,10 @@ trading:
 notifications:
   discord_webhook_url: "https://discord.com/api/webhooks/YOUR_WEBHOOK_ID/YOUR_WEBHOOK_TOKEN"
 
+# Dashboard Configuration
+dashboard:
+  public_url: "http://localhost:8001"  # Update with ngrok URL or public IP for remote access
+
 # OpenAI Configuration (for news sentiment analysis)
 openai:
   api_key: "YOUR_OPENAI_API_KEY"

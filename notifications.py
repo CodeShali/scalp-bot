@@ -7,20 +7,32 @@ import requests
 class DiscordNotifier:
     """Simple Discord webhook integration for bot alerts."""
 
-    def __init__(self, webhook_url: Optional[str]) -> None:
-        self.webhook_url = webhook_url
+    def __init__(self, config: Dict[str, Any]) -> None:
+        self.webhook_url = config.get('notifications', {}).get('discord_webhook_url')
+        self.dashboard_url = config.get('dashboard', {}).get('public_url', 'http://localhost:8001')
         self.logger = logging.getLogger(__name__)
 
     def is_configured(self) -> bool:
         return bool(self.webhook_url)
 
-    def send(self, message: str, embeds: Optional[list] = None) -> None:
+    def send(self, message: str, embeds: Optional[list] = None, add_dashboard_link: bool = True) -> None:
         if not self.is_configured():
             self.logger.debug("Discord webhook not configured; skipping message: %s", message)
             return
 
         payload: Dict[str, Any] = {"content": message}
         if embeds:
+            # Add dashboard URL to each embed if requested
+            if add_dashboard_link:
+                for embed in embeds:
+                    # Add clickable dashboard link in footer
+                    if 'fields' not in embed:
+                        embed['fields'] = []
+                    embed['fields'].append({
+                        "name": "🖥️ Dashboard",
+                        "value": f"[**View Live Dashboard**]({self.dashboard_url})",
+                        "inline": False
+                    })
             payload["embeds"] = embeds
 
         try:
@@ -45,12 +57,18 @@ class DiscordNotifier:
         embed = {
             "title": "🎯 Active Tickers Selected" if active_tickers and len(active_tickers) > 1 else "🎯 Ticker of the Day Selected",
             "description": description,
-            "color": 3447003,  # Blue
+            "color": 5763719,  # Green
             "fields": [
-                {"name": "📊 Primary Score", "value": f"`{score:.3f}`", "inline": True},
+                {"name": "📊 Top Score", "value": f"`{score:.3f}/100`", "inline": True},
                 {"name": "📈 Monitoring", "value": f"`{len(active_tickers) if active_tickers else 1} ticker(s)`", "inline": True},
             ],
-            "footer": {"text": "TARA | Pre-Market Scan"},
+            "thumbnail": {
+                "url": "https://raw.githubusercontent.com/twitter/twemoji/master/assets/72x72/1f4c8.png"
+            },
+            "footer": {
+                "text": "TARA | Pre-Market Scan Complete",
+                "icon_url": "https://raw.githubusercontent.com/twitter/twemoji/master/assets/72x72/1f916.png"
+            },
             "timestamp": self._get_timestamp()
         }
         self.send("", embeds=[embed])

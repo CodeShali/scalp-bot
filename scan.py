@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Tuple
 
 import pandas as pd
+import pytz
 
 from broker import BrokerClient
 from notifications import DiscordNotifier
@@ -189,7 +190,7 @@ class TickerScanner:
             bars = self.broker.get_historical_bars(
                 symbol,
                 "1Day",
-                start=datetime.utcnow() - timedelta(days=10),
+                start=datetime.now(pytz.UTC) - timedelta(days=10),
                 limit=5,
             )
             if len(bars) < 2:
@@ -236,21 +237,28 @@ class TickerScanner:
     def _get_option_open_interest(self, symbol: str) -> float:
         chain = self.broker.get_option_chain(symbol)
         total_interest = 0.0
-        now = datetime.utcnow()
+        now = datetime.now(pytz.UTC).date()  # Use date only for comparison
         for option in chain:
             expiration = option.get("expiration_date")
             if not expiration:
                 continue
             try:
-                expiration_dt = datetime.fromisoformat(expiration)
-            except ValueError:
+                # Parse expiration date (YYYY-MM-DD format)
+                if isinstance(expiration, str):
+                    expiration_date = datetime.fromisoformat(expiration).date()
+                else:
+                    expiration_date = expiration
+            except (ValueError, AttributeError):
                 continue
-            days_to_exp = (expiration_dt - now).days
-            if days_to_exp not in {0, 1}:
+            days_to_exp = (expiration_date - now).days
+            if days_to_exp < 0 or days_to_exp > 5:  # Only count options expiring within 5 days
                 continue
             oi = option.get("open_interest")
-            if oi is not None:
-                total_interest += float(oi)
+            if oi is not None and oi != "":
+                try:
+                    total_interest += float(oi)
+                except (ValueError, TypeError):
+                    pass  # Skip invalid OI values
         return total_interest
 
     def _get_atr(self, symbol: str, period: int = 14) -> float:
@@ -259,7 +267,7 @@ class TickerScanner:
             bars = self.broker.get_historical_bars(
                 symbol,
                 "1Day",
-                start=datetime.utcnow() - timedelta(days=period * 3),
+                start=datetime.now(pytz.UTC) - timedelta(days=period * 3),
             )
             if len(bars) < period:
                 return 0.0
