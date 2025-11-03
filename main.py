@@ -80,23 +80,37 @@ class ScalpingBot:
     
     def _get_dashboard_url(self) -> str:
         """Auto-detect dashboard URL (ngrok or local)."""
+        import requests
+        
+        logger.info("Detecting dashboard URL...")
+        
+        # Try to get ngrok URL from API
         try:
-            # Try to get ngrok URL from API
-            import requests
-            response = requests.get("http://localhost:4040/api/tunnels", timeout=2)
+            logger.info("Checking for ngrok tunnel at localhost:4040...")
+            response = requests.get("http://localhost:4040/api/tunnels", timeout=3)
+            
             if response.status_code == 200:
-                tunnels = response.json().get("tunnels", [])
+                data = response.json()
+                tunnels = data.get("tunnels", [])
+                logger.info("Found %d tunnels", len(tunnels))
+                
                 for tunnel in tunnels:
                     if tunnel.get("proto") == "https":
                         ngrok_url = tunnel.get("public_url")
-                        logger.info("Detected ngrok URL: %s", ngrok_url)
+                        logger.info("✅ Detected ngrok URL: %s", ngrok_url)
                         return ngrok_url
-        except Exception:
-            pass  # ngrok not running, use fallback
+                logger.warning("Found tunnels but no HTTPS tunnel")
+            else:
+                logger.warning("ngrok API returned status %s", response.status_code)
+                
+        except requests.exceptions.RequestException as e:
+            logger.warning("Could not connect to ngrok API: %s", e)
+        except Exception as e:
+            logger.warning("Error detecting ngrok: %s", e)
         
         # Fallback to config or localhost
         dashboard_url = self.config.get("dashboard", {}).get("public_url", "http://localhost:8001")
-        logger.info("Using dashboard URL: %s", dashboard_url)
+        logger.info("Using fallback dashboard URL: %s", dashboard_url)
         return dashboard_url
     
     def _log_startup_info(self) -> None:
