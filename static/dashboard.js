@@ -21,8 +21,8 @@ async function loadWatchlist() {
     try {
         const response = await fetch('/api/status');
         const data = await response.json();
-        // Get watchlist from config (temporary workaround)
-        const watchlist = ['SPY', 'QQQ', 'AAPL', 'TSLA', 'NVDA']; // Default for now
+        // Get watchlist from bot config
+        const watchlist = data.config?.watchlist?.symbols || [];
         updateWatchlistDisplay(watchlist);
     } catch (error) {
         console.error('Error loading watchlist:', error);

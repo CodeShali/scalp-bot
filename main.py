@@ -714,6 +714,9 @@ def api_status():
         'position': position,
         'ticker_of_day': ticker_info,
         'today_trades': today_trades,
+        'config': {
+            'watchlist': bot.config.get('watchlist', {})
+        },
         'timestamp': datetime.now(EASTERN_TZ).isoformat()
     })
 
