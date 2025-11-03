@@ -84,15 +84,14 @@ class ScalpingBot:
         self._log_startup_info()
     
     def _ensure_ngrok_running(self) -> None:
-        """Ensure ngrok is running and get its URL."""
-        import subprocess
-        import signal
+        """Detect ngrok URL if running, otherwise use localhost."""
         import requests
         import time
-        import os
         
-        try:
-            # Check if ngrok is already running
+        logger.info("Detecting ngrok tunnel...")
+        
+        # Try to detect ngrok for up to 10 seconds
+        for attempt in range(5):
             try:
                 response = requests.get("http://localhost:4040/api/tunnels", timeout=2)
                 if response.status_code == 200:
@@ -100,72 +99,24 @@ class ScalpingBot:
                     https_tunnels = [t for t in tunnels if t.get("proto") == "https"]
                     if https_tunnels:
                         self.ngrok_url = https_tunnels[0].get("public_url")
-                        logger.info("ngrok already running with URL: %s", self.ngrok_url)
+                        logger.info("✅ Detected ngrok tunnel: %s", self.ngrok_url)
                         return
             except:
                 pass
             
-            # Kill any existing ngrok processes to avoid ERR_NGROK_108
-            logger.info("Cleaning up any existing ngrok processes...")
-            try:
-                subprocess.run(["pkill", "-9", "ngrok"], stderr=subprocess.DEVNULL)
-                time.sleep(2)  # Wait for processes to die
-            except:
-                pass
-            
-            # Start ngrok
-            logger.info("Starting ngrok service...")
-            self.ngrok_process = subprocess.Popen(
-                ["ngrok", "http", "8001"],
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-                stdin=subprocess.DEVNULL,
-                preexec_fn=os.setsid  # Create process group for clean shutdown
-            )
-            
-            # Wait for ngrok to start and get URL
-            logger.info("Waiting for ngrok tunnel to establish...")
-            for attempt in range(10):  # Try for 20 seconds
-                try:
-                    response = requests.get("http://localhost:4040/api/tunnels", timeout=3)
-                    if response.status_code == 200:
-                        tunnels = response.json().get("tunnels", [])
-                        https_tunnels = [t for t in tunnels if t.get("proto") == "https"]
-                        if https_tunnels:
-                            self.ngrok_url = https_tunnels[0].get("public_url")
-                            logger.info("✅ ngrok service started successfully: %s", self.ngrok_url)
-                            return
-                except:
-                    pass
+            if attempt < 4:  # Don't sleep on last attempt
                 time.sleep(2)
-            
-            # If we get here, ngrok failed to start
-            logger.error("Failed to start ngrok service after 20 seconds")
-            logger.warning("Dashboard will be available at http://localhost:8001 only")
-            self.ngrok_url = "http://localhost:8001"
-            
-        except FileNotFoundError:
-            logger.warning("ngrok not installed. Install from https://ngrok.com/download")
-            logger.warning("Dashboard will be available at http://localhost:8001 only")
-            self.ngrok_url = "http://localhost:8001"
-        except Exception as e:
-            logger.error("Error managing ngrok: %s", e)
-            self.ngrok_url = "http://localhost:8001"
+        
+        # No ngrok detected, use localhost
+        logger.warning("ngrok not detected. Dashboard will be at http://localhost:8001")
+        logger.info("To enable public access, start ngrok service:")
+        logger.info("  sudo systemctl start ngrok")
+        self.ngrok_url = "http://localhost:8001"
     
     def _stop_ngrok(self) -> None:
-        """Stop the ngrok process if we started it."""
-        if self.ngrok_process:
-            try:
-                logger.info("Stopping ngrok service...")
-                os.killpg(os.getpgid(self.ngrok_process.pid), signal.SIGTERM)
-                self.ngrok_process.wait(timeout=5)
-                logger.info("ngrok service stopped")
-            except Exception as e:
-                logger.warning("Error stopping ngrok: %s", e)
-                try:
-                    self.ngrok_process.kill()
-                except:
-                    pass
+        """Cleanup method - ngrok is managed by systemd service."""
+        # ngrok runs as separate systemd service, no cleanup needed
+        pass
     
     def _get_dashboard_url(self) -> str:
         """Return the dashboard URL (managed by ngrok service)."""

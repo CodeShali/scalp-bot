@@ -60,14 +60,7 @@ git clone <your-repo-url> scalp-bot
 cd scalp-bot
 ```
 
-### Run Setup Script
-
-```bash
-chmod +x setup.sh
-./setup.sh
-```
-
-### Configure Bot
+### Configure Bot FIRST
 
 ```bash
 # Copy example config
@@ -85,35 +78,36 @@ Update these sections:
 - Trading parameters
 - **NEW**: `max_active_tickers: 3` (monitor top 3 tickers)
 
-### Install Dashboard Dependencies
+### Install ngrok and Configure
 
 ```bash
-source venv/bin/activate
-pip install Flask==3.0.0
-deactivate
+# Install ngrok
+curl -s https://ngrok-agent.s3.amazonaws.com/ngrok.asc | sudo tee /etc/apt/trusted.gpg.d/ngrok.asc >/dev/null
+echo "deb https://ngrok-agent.s3.amazonaws.com buster main" | sudo tee /etc/apt/sources.list.d/ngrok.list
+sudo apt update && sudo apt install ngrok
+
+# Configure with your authtoken (get from https://dashboard.ngrok.com)
+ngrok config add-authtoken YOUR_AUTHTOKEN_HERE
 ```
 
-## 🚀 Step 3: Install as System Services
-
-### Install Bot Service
+### Run Automated Setup Script
 
 ```bash
-# Copy service file
-sudo cp scalp-bot.service /etc/systemd/system/
-
-# Edit paths if needed (default uses /home/pi/scalp-bot)
-sudo nano /etc/systemd/system/scalp-bot.service
-
-# Enable and start
-sudo systemctl daemon-reload
-sudo systemctl enable scalp-bot
-sudo systemctl start scalp-bot
-
-# Check status
-sudo systemctl status scalp-bot
+chmod +x setup_pi.sh
+./setup_pi.sh
 ```
 
-**Note:** Dashboard is now integrated into main.py - no separate service needed!
+**This script automatically:**
+- ✅ Stops existing services
+- ✅ Updates code from GitHub
+- ✅ Installs Python dependencies
+- ✅ Configures ngrok service (starts on boot)
+- ✅ Configures bot service (starts on boot)
+- ✅ Creates necessary directories
+- ✅ Starts both services
+- ✅ Shows status and useful commands
+
+**Note:** Run this script anytime you update code to deploy changes!
 
 ## 🌐 Step 4: Access Dashboard
 
@@ -342,26 +336,34 @@ vcgencmd measure_temp
 
 ## 🔄 Updates and Backups
 
-### Update Bot Code (NEW: Automated Script!)
+### Update Bot Code (Automated!)
 
 **Quick Update (Recommended):**
 ```bash
 cd /home/pi/scalp-bot
-./deploy.sh
+./setup_pi.sh
 ```
-This script automatically:
-- Pulls latest code
-- Updates dependencies
-- Checks configuration
-- Restarts service
-- Verifies deployment
 
-**Manual Update:**
+This script automatically:
+- ✅ Stops services safely
+- ✅ Pulls latest code from GitHub
+- ✅ Updates Python dependencies
+- ✅ Configures ngrok service
+- ✅ Configures bot service
+- ✅ Restarts both services
+- ✅ Shows status and logs
+
+**Run this anytime you push code changes!**
+
+**Manual Update (if needed):**
 ```bash
 cd /home/pi/scalp-bot
+sudo systemctl stop scalp-bot ngrok
 git pull origin main
-pip3 install -r requirements.txt --upgrade
-sudo systemctl restart scalp-bot
+source venv/bin/activate
+pip install -r requirements.txt --upgrade
+deactivate
+sudo systemctl start ngrok scalp-bot
 ```
 
 **Force Update (if conflicts):**
@@ -369,7 +371,7 @@ sudo systemctl restart scalp-bot
 cd /home/pi/scalp-bot
 git fetch origin
 git reset --hard origin/main
-./deploy.sh
+./setup_pi.sh
 ```
 
 ### Backup Configuration
