@@ -715,7 +715,9 @@ def api_status():
         'ticker_of_day': ticker_info,
         'today_trades': today_trades,
         'config': {
-            'watchlist': bot.config.get('watchlist', {})
+            'watchlist': bot.config.get('watchlist', {}),
+            'trading': bot.config.get('trading', {}),
+            'signals': bot.config.get('signals', {})
         },
         'timestamp': datetime.now(EASTERN_TZ).isoformat()
     })
@@ -1060,6 +1062,46 @@ def api_remove_from_watchlist():
     except Exception as exc:
         logger.error("Failed to update config: %s", exc)
         return jsonify({'error': 'Failed to save configuration'}), 500
+
+
+@app.route('/api/settings', methods=['POST'])
+def api_update_settings():
+    """Update bot configuration settings."""
+    bot = ScalpingBot._instance
+    if not bot:
+        return jsonify({'error': 'Bot not initialized'}), 503
+    
+    data = request.get_json()
+    
+    try:
+        import yaml
+        
+        # Update trading settings
+        if 'trading' in data:
+            if 'trading' not in bot.config:
+                bot.config['trading'] = {}
+            bot.config['trading'].update(data['trading'])
+        
+        # Update signal settings
+        if 'signals' in data:
+            if 'signals' not in bot.config:
+                bot.config['signals'] = {}
+            bot.config['signals'].update(data['signals'])
+        
+        # Save to config file
+        with open('config.yaml', 'w') as f:
+            yaml.dump(bot.config, f, default_flow_style=False)
+        
+        logger.info("Settings updated successfully")
+        bot.notifier.send("⚙️ **Settings Updated**\nConfiguration changes saved and applied.")
+        
+        return jsonify({
+            'success': True,
+            'message': 'Settings updated successfully'
+        })
+    except Exception as exc:
+        logger.error("Failed to update settings: %s", exc)
+        return jsonify({'error': 'Failed to save settings'}), 500
 
 
 def main() -> None:

@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Scalp Bot | Terminal</title>
+    <title>TARA | Trading Assistant</title>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/static/dashboard.css?v=11">
+    <link rel="stylesheet" href="/static/dashboard.css?v=12">
 </head>
 <body>
     <canvas id="matrix-bg"></canvas>
@@ -13,8 +13,8 @@
         <!-- Header -->
         <div class="header">
             <div class="header-left">
-                <h1>⚡ SCALP-BOT TERMINAL</h1>
-                <div class="subtitle">AUTOMATED OPTIONS TRADING SYSTEM</div>
+                <h1>🤖 TARA</h1>
+                <div class="subtitle">TRADING ASSISTANT & RISK ANALYZER</div>
             </div>
             <span id="botStatus" class="status-badge loading">INITIALIZING...</span>
         </div>
@@ -39,6 +39,7 @@
                 <button id="pauseBtn" class="btn btn-warning">PAUSE</button>
                 <button id="resumeBtn" class="btn btn-success" style="display:none;">RESUME</button>
                 <button id="forceCloseBtn" class="btn btn-danger">FORCE CLOSE</button>
+                <button id="settingsBtn" class="btn btn-info">⚙️ SETTINGS</button>
             </div>
         </div>
         
@@ -142,7 +143,75 @@
         </div>
     </div>
     
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>⚙️ TARA Settings</h2>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="settings-section">
+                    <h3>Trading Parameters</h3>
+                    <div class="setting-item">
+                        <label>Profit Target (%)</label>
+                        <input type="number" id="profitTarget" step="0.01" min="0" max="1">
+                        <span class="setting-help">Exit when position reaches this profit percentage</span>
+                    </div>
+                    <div class="setting-item">
+                        <label>Stop Loss (%)</label>
+                        <input type="number" id="stopLoss" step="0.01" min="0" max="1">
+                        <span class="setting-help">Exit when position hits this loss percentage</span>
+                    </div>
+                    <div class="setting-item">
+                        <label>Risk Per Trade (%)</label>
+                        <input type="number" id="riskPerTrade" step="0.001" min="0" max="0.1">
+                        <span class="setting-help">Percentage of capital to risk per trade</span>
+                    </div>
+                    <div class="setting-item">
+                        <label>Position Timeout (seconds)</label>
+                        <input type="number" id="timeout" step="1" min="60" max="3600">
+                        <span class="setting-help">Auto-exit if position held longer than this</span>
+                    </div>
+                </div>
+                
+                <div class="settings-section">
+                    <h3>Safety Limits</h3>
+                    <div class="setting-item">
+                        <label>Max Daily Loss (%)</label>
+                        <input type="number" id="maxDailyLoss" step="0.01" min="0" max="0.5">
+                        <span class="setting-help">Stop trading if daily loss exceeds this</span>
+                    </div>
+                    <div class="setting-item">
+                        <label>Max Trades Per Day</label>
+                        <input type="number" id="maxTrades" step="1" min="1" max="50">
+                        <span class="setting-help">Maximum number of trades allowed per day</span>
+                    </div>
+                </div>
+                
+                <div class="settings-section">
+                    <h3>Signal Detection</h3>
+                    <div class="setting-item">
+                        <label>RSI Call Minimum</label>
+                        <input type="number" id="rsiCallMin" step="1" min="50" max="80">
+                        <span class="setting-help">Minimum RSI for call signals</span>
+                    </div>
+                    <div class="setting-item">
+                        <label>RSI Put Maximum</label>
+                        <input type="number" id="rsiPutMax" step="1" min="20" max="50">
+                        <span class="setting-help">Maximum RSI for put signals</span>
+                    </div>
+                </div>
+                
+                <div class="modal-footer">
+                    <button id="saveSettings" class="btn btn-success">SAVE CHANGES</button>
+                    <button id="cancelSettings" class="btn btn-secondary">CANCEL</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <script src="/static/matrix.js"></script>
-    <script src="/static/dashboard.js?v=5"></script>
+    <script src="/static/dashboard.js?v=6"></script>
 </body>
 </html>
