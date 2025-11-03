@@ -5,25 +5,25 @@ Wants=network-online.target
 
 [Service]
 Type=simple
-# Run as root to avoid credential issues
-User=root
-WorkingDirectory=/root
+User=pi
+WorkingDirectory=/home/pi
 
 # Start ngrok tunnel for port 8001
-# Try common ngrok locations
-ExecStart=/bin/bash -c 'if [ -f /usr/local/bin/ngrok ]; then /usr/local/bin/ngrok http 8001; elif [ -f /usr/bin/ngrok ]; then /usr/bin/ngrok http 8001; else ngrok http 8001; fi'
+ExecStart=/usr/bin/env ngrok http 8001 --log stdout
 
 # Restart on failure
 Restart=always
 RestartSec=10
+StartLimitBurst=5
+StartLimitIntervalSec=60
 
 # Logging
 StandardOutput=journal
 StandardError=journal
 SyslogIdentifier=ngrok
 
-# Environment
-Environment="HOME=/root"
+# Environment - use pi user's home for config
+Environment="HOME=/home/pi"
 
 [Install]
 WantedBy=multi-user.target
