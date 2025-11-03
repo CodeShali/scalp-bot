@@ -105,6 +105,14 @@ class ScalpingBot:
             except:
                 pass
             
+            # Kill any existing ngrok processes to avoid ERR_NGROK_108
+            logger.info("Cleaning up any existing ngrok processes...")
+            try:
+                subprocess.run(["pkill", "-9", "ngrok"], stderr=subprocess.DEVNULL)
+                time.sleep(2)  # Wait for processes to die
+            except:
+                pass
+            
             # Start ngrok
             logger.info("Starting ngrok service...")
             self.ngrok_process = subprocess.Popen(
