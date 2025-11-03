@@ -73,9 +73,28 @@ class TickerScanner:
             return None
 
         scored_tickers.sort(key=lambda item: item[1], reverse=True)
-        winner_symbol, winner_score, winner_metrics = scored_tickers[0]
+        
+        # Get top N tickers based on config
+        max_active = scanning_cfg.get("max_active_tickers", 1)
+        top_tickers = scored_tickers[:max_active]
+        
+        # Primary ticker (highest score)
+        winner_symbol, winner_score, winner_metrics = top_tickers[0]
+        
+        # Prepare all active tickers
+        active_tickers = [
+            {
+                "symbol": symbol,
+                "score": score,
+                "metrics": metrics,
+                "rank": idx + 1
+            }
+            for idx, (symbol, score, metrics) in enumerate(top_tickers)
+        ]
 
-        self.logger.info("Ticker of the Day selected: %s (score %.4f)", winner_symbol, winner_score)
+        self.logger.info("Top %d tickers selected:", len(active_tickers))
+        for ticker in active_tickers:
+            self.logger.info("  #%d: %s (score %.4f)", ticker['rank'], ticker['symbol'], ticker['score'])
 
         state = read_state()
         state.update(
@@ -84,17 +103,19 @@ class TickerScanner:
                 "ticker_selection_time": now_eastern.isoformat(),
                 "ticker_metrics": winner_metrics,
                 "ticker_score": winner_score,
+                "active_tickers": active_tickers,  # Store all active tickers
             }
         )
         update_state(state)
 
         if self.notifier.is_configured():
-            self.notifier.alert_ticker_selection(winner_symbol, winner_score, winner_metrics)
+            self.notifier.alert_ticker_selection(winner_symbol, winner_score, winner_metrics, active_tickers)
 
         return {
             "symbol": winner_symbol,
             "score": winner_score,
             "metrics": winner_metrics,
+            "active_tickers": active_tickers,
         }
 
     # -------------------- Metric Calculations --------------------

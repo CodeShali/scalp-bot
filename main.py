@@ -318,19 +318,34 @@ class ScalpingBot:
         
         try:
             state = read_state()
-            ticker = state.get("ticker_of_the_day")
-            if not ticker:
+            
+            # Get all active tickers (fallback to single ticker for backward compatibility)
+            active_tickers = state.get("active_tickers", [])
+            if not active_tickers:
+                # Fallback to old single ticker approach
+                ticker = state.get("ticker_of_the_day")
+                if ticker:
+                    active_tickers = [{"symbol": ticker, "rank": 1}]
+            
+            if not active_tickers:
                 return
 
             open_position = state.get("open_position")
             if open_position:
                 return
 
-            signal_payload = self.signal_detector.evaluate(ticker)
-            if signal_payload:
-                logger.info("Signal detected: %s %s at %.2f", 
-                           ticker, signal_payload['direction'].upper(), signal_payload['price'])
-                self._execute_trade(signal_payload)
+            # Check each active ticker for signals (in rank order)
+            for ticker_info in active_tickers:
+                ticker = ticker_info["symbol"]
+                rank = ticker_info.get("rank", 1)
+                
+                signal_payload = self.signal_detector.evaluate(ticker)
+                if signal_payload:
+                    logger.info("Signal detected on #%d ticker %s: %s at %.2f", 
+                               rank, ticker, signal_payload['direction'].upper(), signal_payload['price'])
+                    self._execute_trade(signal_payload)
+                    break  # Only take first signal
+                    
         except Exception as exc:  # noqa: BLE001
             logger.exception("Error while evaluating signals: %s", exc)
             self.notifier.alert_error("signal evaluation", exc)
@@ -677,7 +692,7 @@ def api_status():
         except Exception:
             pass
     
-    # Ticker of day
+    # Ticker of day and active tickers
     ticker = state.get('ticker_of_the_day')
     ticker_info = None
     if ticker:
@@ -687,6 +702,9 @@ def api_status():
             'score': state.get('ticker_score', 0),
             'metrics': state.get('ticker_metrics', {})
         }
+    
+    # Get all active tickers
+    active_tickers = state.get('active_tickers', [])
     
     # Today's trades
     from pathlib import Path
@@ -713,11 +731,13 @@ def api_status():
         'account': account_info,
         'position': position,
         'ticker_of_day': ticker_info,
+        'active_tickers': active_tickers,
         'today_trades': today_trades,
         'config': {
             'watchlist': bot.config.get('watchlist', {}),
             'trading': bot.config.get('trading', {}),
-            'signals': bot.config.get('signals', {})
+            'signals': bot.config.get('signals', {}),
+            'scanning': bot.config.get('scanning', {})
         },
         'timestamp': datetime.now(EASTERN_TZ).isoformat()
     })

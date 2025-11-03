@@ -32,17 +32,25 @@ class DiscordNotifier:
         except requests.RequestException as exc:
             self.logger.exception("Error sending Discord notification: %s", exc)
 
-    def alert_ticker_selection(self, ticker: str, score: float, metrics: Dict[str, float]) -> None:
+    def alert_ticker_selection(self, ticker: str, score: float, metrics: Dict[str, float], active_tickers: list = None) -> None:
+        # Build description with all active tickers
+        if active_tickers and len(active_tickers) > 1:
+            description = f"**Top {len(active_tickers)} tickers** selected for monitoring:\n\n"
+            for t in active_tickers:
+                emoji = "🥇" if t['rank'] == 1 else "🥈" if t['rank'] == 2 else "🥉"
+                description += f"{emoji} **#{t['rank']}: {t['symbol']}** (Score: {t['score']:.3f})\n"
+        else:
+            description = f"**{ticker}** has been selected for today's trading"
+        
         embed = {
-            "title": "🎯 Ticker of the Day Selected",
-            "description": f"**{ticker}** has been selected for today's trading",
+            "title": "🎯 Active Tickers Selected" if active_tickers and len(active_tickers) > 1 else "🎯 Ticker of the Day Selected",
+            "description": description,
             "color": 3447003,  # Blue
             "fields": [
-                {"name": "📊 Score", "value": f"`{score:.3f}`", "inline": True},
-                {"name": "📈 Volume", "value": f"`{metrics.get('volume', 0):.0f}`", "inline": True},
-                {"name": "💹 Volatility", "value": f"`{metrics.get('volatility', 0):.3f}`", "inline": True},
+                {"name": "📊 Primary Score", "value": f"`{score:.3f}`", "inline": True},
+                {"name": "📈 Monitoring", "value": f"`{len(active_tickers) if active_tickers else 1} ticker(s)`", "inline": True},
             ],
-            "footer": {"text": "Scalp Bot | Pre-Market Scan"},
+            "footer": {"text": "TARA | Pre-Market Scan"},
             "timestamp": self._get_timestamp()
         }
         self.send("", embeds=[embed])

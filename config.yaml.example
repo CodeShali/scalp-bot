@@ -31,6 +31,7 @@ watchlist:
 # Pre-Market Scanning Configuration
 scanning:
   run_time: "08:30"  # ET time for daily scan
+  max_active_tickers: 3  # Monitor top N tickers (1-5 recommended)
   weights:
     premarket_volume: 0.25
     gap_percent: 0.20

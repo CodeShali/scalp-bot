@@ -149,6 +149,33 @@ function updateDashboard() {
                 tickerInfo.innerHTML = '<div class="empty-state">AWAITING PRE-MARKET SCAN...</div>';
             }
             
+            // Display all active tickers
+            const activeTickersList = document.getElementById('activeTickersList');
+            if (data.active_tickers && data.active_tickers.length > 1) {
+                activeTickersList.innerHTML = `
+                    <div style="background: rgba(0, 217, 255, 0.05); padding: 15px; border-radius: 4px; border: 1px solid #00d9ff;">
+                        <div style="font-size: 12px; color: #00d9ff; margin-bottom: 10px; font-weight: 700;">
+                            MONITORING ${data.active_tickers.length} TICKERS:
+                        </div>
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                            ${data.active_tickers.map(t => {
+                                const emoji = t.rank === 1 ? '🥇' : t.rank === 2 ? '🥈' : '🥉';
+                                const color = t.rank === 1 ? '#00ff41' : t.rank === 2 ? '#00d9ff' : '#ffa500';
+                                return `
+                                    <div style="background: rgba(0, 0, 0, 0.3); padding: 10px 15px; border-left: 3px solid ${color}; border-radius: 4px;">
+                                        <div style="font-size: 10px; color: #666;">RANK #${t.rank}</div>
+                                        <div style="font-size: 16px; font-weight: 700; color: ${color};">${emoji} ${t.symbol}</div>
+                                        <div style="font-size: 11px; color: #999;">Score: ${t.score.toFixed(3)}</div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                `;
+            } else {
+                activeTickersList.innerHTML = '';
+            }
+            
             // Current position
             const positionInfo = document.getElementById('positionInfo');
             if (data.position) {
