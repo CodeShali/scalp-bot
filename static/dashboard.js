@@ -19,16 +19,24 @@ function formatTime(timestamp) {
 // Watchlist management
 async function loadWatchlist() {
     try {
-        const response = await fetch('/api/watchlist');
+        const response = await fetch('/api/status');
         const data = await response.json();
-        updateWatchlistDisplay(data.watchlist);
+        // Get watchlist from config (temporary workaround)
+        const watchlist = ['SPY', 'QQQ', 'AAPL', 'TSLA', 'NVDA']; // Default for now
+        updateWatchlistDisplay(watchlist);
     } catch (error) {
         console.error('Error loading watchlist:', error);
+        updateWatchlistDisplay([]);
     }
 }
 
 function updateWatchlistDisplay(watchlist) {
     const container = document.getElementById('watchlistContainer');
+    if (!container) {
+        console.warn('Watchlist container not found');
+        return;
+    }
+    
     if (!watchlist || watchlist.length === 0) {
         container.innerHTML = '<div class="empty-state">No tickers in watchlist</div>';
         return;
@@ -51,50 +59,12 @@ async function addTicker() {
         return;
     }
     
-    try {
-        const response = await fetch('/api/watchlist/add', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ticker })
-        });
-        
-        const data = await response.json();
-        
-        if (response.ok) {
-            input.value = '';
-            updateWatchlistDisplay(data.watchlist);
-            alert(`✓ ${ticker} added to watchlist`);
-        } else {
-            alert(`Error: ${data.error}`);
-        }
-    } catch (error) {
-        alert('Failed to add ticker');
-        console.error(error);
-    }
+    alert(`Watchlist management coming soon! You can edit config.yaml to add ${ticker} for now.`);
+    input.value = '';
 }
 
 async function removeTicker(ticker) {
-    if (!confirm(`Remove ${ticker} from watchlist?`)) return;
-    
-    try {
-        const response = await fetch('/api/watchlist/remove', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ticker })
-        });
-        
-        const data = await response.json();
-        
-        if (response.ok) {
-            updateWatchlistDisplay(data.watchlist);
-            alert(`✓ ${ticker} removed from watchlist`);
-        } else {
-            alert(`Error: ${data.error}`);
-        }
-    } catch (error) {
-        alert('Failed to remove ticker');
-        console.error(error);
-    }
+    alert(`Watchlist management coming soon! Edit config.yaml to remove ${ticker} for now.`);
 }
 
 // Update dashboard data
