@@ -92,11 +92,16 @@ class ScalpingBot:
         logger.info("Market hours: Mon-Fri 9:30 AM - 4:00 PM ET (monitoring only)")
         logger.info("========================================")
         
+        # Send startup notification with dashboard link
         if self.notifier.is_configured():
-            self.notifier.send(
-                "🚀 Options Scalping Bot started successfully in **{}** mode".format(
-                    self.config.get("mode", "unknown").upper()
-                )
+            # Get next scan time
+            scanning_cfg = self.config.get("scanning", {})
+            run_time = scanning_cfg.get("run_time", "08:30")
+            next_scan = f"Tomorrow at {run_time} ET" if datetime.now(EASTERN_TZ).hour > 8 else f"Today at {run_time} ET"
+            
+            self.notifier.alert_startup(
+                mode=self.config.get("mode", "paper"),
+                next_scan_time=next_scan
             )
 
     def _register_jobs(self) -> None:

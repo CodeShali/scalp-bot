@@ -156,6 +156,34 @@ class DiscordNotifier:
         }
         self.send("", embeds=[embed])
     
+    def alert_startup(self, mode: str, next_scan_time: str = None) -> None:
+        """Send bot startup notification with dashboard link."""
+        description = f"🚀 **TARA Scalp Bot** is now online and running in **{mode.upper()}** mode!\n\n"
+        
+        if next_scan_time:
+            description += f"📅 Next pre-market scan: **{next_scan_time}**\n"
+        
+        description += f"🖥️ Access your dashboard below to monitor activity."
+        
+        embed = {
+            "title": "✅ Bot Started Successfully",
+            "description": description,
+            "color": 3066993,  # Green
+            "fields": [
+                {"name": "📊 Mode", "value": f"`{mode.upper()}`", "inline": True},
+                {"name": "⏰ Status", "value": "`Running`", "inline": True},
+            ],
+            "thumbnail": {
+                "url": "https://raw.githubusercontent.com/twitter/twemoji/master/assets/72x72/2705.png"
+            },
+            "footer": {
+                "text": "TARA | Bot Initialized",
+                "icon_url": "https://raw.githubusercontent.com/twitter/twemoji/master/assets/72x72/1f916.png"
+            },
+            "timestamp": self._get_timestamp()
+        }
+        self.send("", embeds=[embed])
+    
     def _get_timestamp(self) -> str:
         """Get current timestamp in ISO format for Discord embeds."""
         from datetime import datetime
