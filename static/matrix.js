@@ -13,42 +13,68 @@ const charArray = chars.split('');
 const fontSize = 14;
 const columns = canvas.width / fontSize;
 
-// Array to store y position of each column
+// Array to store y position and color for each column
 const drops = [];
+const colors = [
+    '#00ff41',  // Matrix green
+    '#00d9ff',  // Cyan
+    '#ff0055',  // Pink/Red
+    '#ffa500',  // Orange
+    '#9d00ff',  // Purple
+    '#00ffff',  // Bright cyan
+    '#ff00ff',  // Magenta
+];
+
 for (let i = 0; i < columns; i++) {
-    drops[i] = Math.random() * -100; // Start at random positions
+    drops[i] = {
+        y: Math.random() * -100,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        speed: 0.3 + Math.random() * 0.3  // Random speed between 0.3-0.6
+    };
 }
 
 // Draw function
 function draw() {
     // Black background with slight transparency for trail effect
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.08)';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
-    // Green text
-    ctx.fillStyle = '#0f0';
     ctx.font = fontSize + 'px monospace';
     
     // Loop through drops
     for (let i = 0; i < drops.length; i++) {
+        const drop = drops[i];
+        
         // Random character
         const text = charArray[Math.floor(Math.random() * charArray.length)];
         
+        // Set color for this drop
+        ctx.fillStyle = drop.color;
+        
+        // Add glow effect
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = drop.color;
+        
         // Draw character
-        ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+        ctx.fillText(text, i * fontSize, drop.y * fontSize);
+        
+        // Reset shadow
+        ctx.shadowBlur = 0;
         
         // Reset drop to top randomly after it crosses screen
-        if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
-            drops[i] = 0;
+        if (drop.y * fontSize > canvas.height && Math.random() > 0.975) {
+            drop.y = 0;
+            drop.color = colors[Math.floor(Math.random() * colors.length)];
+            drop.speed = 0.3 + Math.random() * 0.3;
         }
         
-        // Increment Y position
-        drops[i]++;
+        // Increment Y position with individual speed
+        drop.y += drop.speed;
     }
 }
 
-// Animation loop
-setInterval(draw, 33); // ~30 FPS
+// Animation loop - slower refresh rate
+setInterval(draw, 50); // ~20 FPS (slower)
 
 // Resize canvas on window resize
 window.addEventListener('resize', () => {
