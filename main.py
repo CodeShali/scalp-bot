@@ -81,13 +81,54 @@ class ScalpingBot:
     def _get_dashboard_url(self) -> str:
         """Auto-detect dashboard URL (ngrok or local)."""
         import requests
+        import subprocess
+        import time
         
         logger.info("Detecting dashboard URL...")
         
-        # Try to get ngrok URL from API
+        # First, try to start ngrok if not running
+        try:
+            logger.info("Checking if ngrok is running...")
+            response = requests.get("http://localhost:4040/api/tunnels", timeout=2)
+        except requests.exceptions.RequestException:
+            # ngrok not running, try to start it
+            logger.info("ngrok not running, starting ngrok http 8001...")
+            try:
+                # Start ngrok in background
+                subprocess.Popen(
+                    ["ngrok", "http", "8001"],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    stdin=subprocess.DEVNULL
+                )
+                logger.info("Started ngrok, waiting for tunnel...")
+                time.sleep(5)  # Give ngrok time to start
+                
+                # Now check again
+                for attempt in range(3):
+                    try:
+                        response = requests.get("http://localhost:4040/api/tunnels", timeout=5)
+                        if response.status_code == 200:
+                            break
+                    except:
+                        pass
+                    time.sleep(2)
+                else:
+                    raise Exception("Failed to start ngrok")
+                    
+            except Exception as e:
+                logger.warning("Could not start ngrok automatically: %s", e)
+                logger.warning("Please start ngrok manually: ngrok http 8001")
+                # Fall back to localhost
+                dashboard_url = self.config.get("dashboard", {}).get("public_url", "http://localhost:8001")
+                logger.info("Using fallback dashboard URL: %s", dashboard_url)
+                return dashboard_url
+        
+        # Now try to get ngrok URL from API
         try:
             logger.info("Checking for ngrok tunnel at localhost:4040...")
-            response = requests.get("http://localhost:4040/api/tunnels", timeout=3)
+            if 'response' not in locals():
+                response = requests.get("http://localhost:4040/api/tunnels", timeout=3)
             
             if response.status_code == 200:
                 data = response.json()
