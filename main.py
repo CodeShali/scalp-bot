@@ -78,6 +78,27 @@ class ScalpingBot:
         self._register_jobs()
         self._log_startup_info()
     
+    def _get_dashboard_url(self) -> str:
+        """Auto-detect dashboard URL (ngrok or local)."""
+        try:
+            # Try to get ngrok URL from API
+            import requests
+            response = requests.get("http://localhost:4040/api/tunnels", timeout=2)
+            if response.status_code == 200:
+                tunnels = response.json().get("tunnels", [])
+                for tunnel in tunnels:
+                    if tunnel.get("proto") == "https":
+                        ngrok_url = tunnel.get("public_url")
+                        logger.info("Detected ngrok URL: %s", ngrok_url)
+                        return ngrok_url
+        except Exception:
+            pass  # ngrok not running, use fallback
+        
+        # Fallback to config or localhost
+        dashboard_url = self.config.get("dashboard", {}).get("public_url", "http://localhost:8001")
+        logger.info("Using dashboard URL: %s", dashboard_url)
+        return dashboard_url
+    
     def _log_startup_info(self) -> None:
         """Log bot configuration and status at startup."""
         logger.info("========================================")
@@ -91,6 +112,20 @@ class ScalpingBot:
         logger.info("Stop loss: %.1f%%", self.config.get("trading", {}).get("stop_loss_pct", 0.07) * 100)
         logger.info("Market hours: Mon-Fri 9:30 AM - 4:00 PM ET (monitoring only)")
         logger.info("========================================")
+        
+        # Auto-detect and set dashboard URL
+        dashboard_url = self._get_dashboard_url()
+        if 'dashboard' not in self.config:
+            self.config['dashboard'] = {}
+        self.config['dashboard']['public_url'] = dashboard_url
+        
+        # Reinitialize notifier with updated config (including dashboard URL)
+        self.notifier = DiscordNotifier(self.config)
+        
+        # Update notifier references in all components
+        self.scanner.notifier = self.notifier
+        self.signal_detector.notifier = self.notifier
+        self.monitor.notifier = self.notifier
         
         # Send startup notification with dashboard link
         if self.notifier.is_configured():
