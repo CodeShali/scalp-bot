@@ -1,4 +1,5 @@
 import logging
+import os
 import signal
 import sys
 import threading
@@ -89,6 +90,7 @@ class ScalpingBot:
         import signal
         import requests
         import time
+        import os
         
         try:
             # Check if ngrok is already running
