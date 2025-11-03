@@ -97,54 +97,6 @@ async function removeTicker(ticker) {
     }
 }
 
-// Control button handlers - wrapped in DOMContentLoaded to ensure elements exist
-function initializeControls() {
-    document.getElementById('addTickerBtn').addEventListener('click', addTicker);
-    document.getElementById('newTicker').addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') addTicker();
-    });
-
-    document.getElementById('pauseBtn').addEventListener('click', async () => {
-    try {
-        const response = await fetch('/api/controls/pause', { method: 'POST' });
-        const data = await response.json();
-        if (response.ok) {
-            document.getElementById('pauseBtn').style.display = 'none';
-            document.getElementById('resumeBtn').style.display = 'block';
-            alert('Trading paused');
-        }
-    } catch (error) {
-        alert('Error pausing bot');
-    }
-});
-
-document.getElementById('resumeBtn').addEventListener('click', async () => {
-    try {
-        const response = await fetch('/api/controls/resume', { method: 'POST' });
-        const data = await response.json();
-        if (response.ok) {
-            document.getElementById('pauseBtn').style.display = 'block';
-            document.getElementById('resumeBtn').style.display = 'none';
-            alert('Trading resumed');
-        }
-    } catch (error) {
-        alert('Error resuming bot');
-    }
-});
-
-    document.getElementById('forceCloseBtn').addEventListener('click', async () => {
-        if (!confirm('Are you sure you want to force close the current position?')) return;
-        
-        try {
-            const response = await fetch('/api/controls/force_close', { method: 'POST' });
-            const data = await response.json();
-            alert(data.message);
-        } catch (error) {
-            alert('Error closing position');
-        }
-    });
-}
-
 // Update dashboard data
 function updateDashboard() {
     // Fetch main status
@@ -182,13 +134,13 @@ function updateDashboard() {
                 tickerInfo.innerHTML = `
                     <div style="text-align: center;">
                         <div class="ticker-badge">${ticker.symbol}</div>
-                        <div style="margin-top: 12px; color: #8892b0; font-size: 12px;">
+                        <div style="margin-top: 12px; color: #666666; font-size: 12px;">
                             Score: ${ticker.score.toFixed(2)}
                         </div>
                     </div>
                 `;
             } else {
-                tickerInfo.innerHTML = '<div class="empty-state">Awaiting pre-market scan...</div>';
+                tickerInfo.innerHTML = '<div class="empty-state">AWAITING PRE-MARKET SCAN...</div>';
             }
             
             // Current position
@@ -221,7 +173,7 @@ function updateDashboard() {
                     ` : ''}
                 `;
             } else {
-                positionInfo.innerHTML = '<div class="empty-state">No position detected</div>';
+                positionInfo.innerHTML = '<div class="empty-state">NO POSITION DETECTED</div>';
             }
             
             // Today's trades
@@ -272,7 +224,7 @@ function updateDashboard() {
         .then(data => {
             const status = document.getElementById('marketStatus').querySelector('.status-value');
             status.textContent = data.market_open ? '🟢 OPEN' : '🔴 CLOSED';
-            status.style.color = data.market_open ? '#10b981' : '#ef4444';
+            status.style.color = data.market_open ? '#00ff41' : '#ff0055';
         });
     
     // Fetch daily limits
@@ -303,7 +255,59 @@ function updateDashboard() {
 
 // Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
-    initializeControls();
+    // Set up watchlist controls
+    const addTickerBtn = document.getElementById('addTickerBtn');
+    const newTickerInput = document.getElementById('newTicker');
+    
+    if (addTickerBtn && newTickerInput) {
+        addTickerBtn.addEventListener('click', addTicker);
+        newTickerInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') addTicker();
+        });
+    }
+    
+    // Set up bot controls
+    document.getElementById('pauseBtn').addEventListener('click', async () => {
+        try {
+            const response = await fetch('/api/controls/pause', { method: 'POST' });
+            const data = await response.json();
+            if (response.ok) {
+                document.getElementById('pauseBtn').style.display = 'none';
+                document.getElementById('resumeBtn').style.display = 'block';
+                alert('Trading paused');
+            }
+        } catch (error) {
+            alert('Error pausing bot');
+        }
+    });
+    
+    document.getElementById('resumeBtn').addEventListener('click', async () => {
+        try {
+            const response = await fetch('/api/controls/resume', { method: 'POST' });
+            const data = await response.json();
+            if (response.ok) {
+                document.getElementById('pauseBtn').style.display = 'block';
+                document.getElementById('resumeBtn').style.display = 'none';
+                alert('Trading resumed');
+            }
+        } catch (error) {
+            alert('Error resuming bot');
+        }
+    });
+    
+    document.getElementById('forceCloseBtn').addEventListener('click', async () => {
+        if (!confirm('Are you sure you want to force close the current position?')) return;
+        
+        try {
+            const response = await fetch('/api/controls/force_close', { method: 'POST' });
+            const data = await response.json();
+            alert(data.message);
+        } catch (error) {
+            alert('Error closing position');
+        }
+    });
+    
+    // Start dashboard updates
     loadWatchlist();
     updateDashboard();
     setInterval(updateDashboard, 5000); // Refresh every 5 seconds
