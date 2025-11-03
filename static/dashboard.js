@@ -16,7 +16,93 @@ function formatTime(timestamp) {
     return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 }
 
+// Watchlist management
+async function loadWatchlist() {
+    try {
+        const response = await fetch('/api/watchlist');
+        const data = await response.json();
+        updateWatchlistDisplay(data.watchlist);
+    } catch (error) {
+        console.error('Error loading watchlist:', error);
+    }
+}
+
+function updateWatchlistDisplay(watchlist) {
+    const container = document.getElementById('watchlistContainer');
+    if (!watchlist || watchlist.length === 0) {
+        container.innerHTML = '<div class="empty-state">No tickers in watchlist</div>';
+        return;
+    }
+    
+    container.innerHTML = watchlist.map(ticker => `
+        <div class="ticker-tag">
+            <span>${ticker}</span>
+            <button class="remove-btn" onclick="removeTicker('${ticker}')">✕</button>
+        </div>
+    `).join('');
+}
+
+async function addTicker() {
+    const input = document.getElementById('newTicker');
+    const ticker = input.value.trim().toUpperCase();
+    
+    if (!ticker) {
+        alert('Please enter a ticker symbol');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/watchlist/add', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ticker })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            input.value = '';
+            updateWatchlistDisplay(data.watchlist);
+            alert(`✓ ${ticker} added to watchlist`);
+        } else {
+            alert(`Error: ${data.error}`);
+        }
+    } catch (error) {
+        alert('Failed to add ticker');
+        console.error(error);
+    }
+}
+
+async function removeTicker(ticker) {
+    if (!confirm(`Remove ${ticker} from watchlist?`)) return;
+    
+    try {
+        const response = await fetch('/api/watchlist/remove', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ticker })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            updateWatchlistDisplay(data.watchlist);
+            alert(`✓ ${ticker} removed from watchlist`);
+        } else {
+            alert(`Error: ${data.error}`);
+        }
+    } catch (error) {
+        alert('Failed to remove ticker');
+        console.error(error);
+    }
+}
+
 // Control button handlers
+document.getElementById('addTickerBtn').addEventListener('click', addTicker);
+document.getElementById('newTicker').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') addTicker();
+});
+
 document.getElementById('pauseBtn').addEventListener('click', async () => {
     try {
         const response = await fetch('/api/controls/pause', { method: 'POST' });
@@ -214,5 +300,7 @@ function updateDashboard() {
 }
 
 // Initialize
+loadWatchlist();
 updateDashboard();
 setInterval(updateDashboard, 5000); // Refresh every 5 seconds
+setInterval(loadWatchlist, 30000); // Refresh watchlist every 30 seconds

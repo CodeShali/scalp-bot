@@ -925,6 +925,107 @@ def api_dashboard_url():
     })
 
 
+@app.route('/api/watchlist')
+def api_get_watchlist():
+    """Get current watchlist."""
+    bot = ScalpingBot._instance
+    if not bot:
+        return jsonify({'error': 'Bot not initialized'}), 503
+    
+    watchlist = bot.config.get('watchlist', {}).get('symbols', [])
+    return jsonify({'watchlist': watchlist})
+
+
+@app.route('/api/watchlist/add', methods=['POST'])
+def api_add_to_watchlist():
+    """Add ticker to watchlist."""
+    bot = ScalpingBot._instance
+    if not bot:
+        return jsonify({'error': 'Bot not initialized'}), 503
+    
+    data = request.get_json()
+    ticker = data.get('ticker', '').upper().strip()
+    
+    if not ticker:
+        return jsonify({'error': 'Ticker is required'}), 400
+    
+    # Validate ticker format (basic check)
+    if not ticker.isalpha() or len(ticker) > 5:
+        return jsonify({'error': 'Invalid ticker format'}), 400
+    
+    # Get current watchlist
+    if 'watchlist' not in bot.config:
+        bot.config['watchlist'] = {}
+    if 'symbols' not in bot.config['watchlist']:
+        bot.config['watchlist']['symbols'] = []
+    
+    watchlist = bot.config['watchlist']['symbols']
+    
+    if ticker in watchlist:
+        return jsonify({'error': f'{ticker} already in watchlist'}), 400
+    
+    # Add ticker
+    watchlist.append(ticker)
+    
+    # Save to config file
+    try:
+        import yaml
+        with open('config.yaml', 'w') as f:
+            yaml.dump(bot.config, f, default_flow_style=False)
+        
+        logger.info("Added %s to watchlist", ticker)
+        bot.notifier.send(f"✅ Added **{ticker}** to watchlist")
+        
+        return jsonify({
+            'success': True,
+            'message': f'{ticker} added to watchlist',
+            'watchlist': watchlist
+        })
+    except Exception as exc:
+        logger.error("Failed to update config: %s", exc)
+        return jsonify({'error': 'Failed to save configuration'}), 500
+
+
+@app.route('/api/watchlist/remove', methods=['POST'])
+def api_remove_from_watchlist():
+    """Remove ticker from watchlist."""
+    bot = ScalpingBot._instance
+    if not bot:
+        return jsonify({'error': 'Bot not initialized'}), 503
+    
+    data = request.get_json()
+    ticker = data.get('ticker', '').upper().strip()
+    
+    if not ticker:
+        return jsonify({'error': 'Ticker is required'}), 400
+    
+    watchlist = bot.config.get('watchlist', {}).get('symbols', [])
+    
+    if ticker not in watchlist:
+        return jsonify({'error': f'{ticker} not in watchlist'}), 400
+    
+    # Remove ticker
+    watchlist.remove(ticker)
+    
+    # Save to config file
+    try:
+        import yaml
+        with open('config.yaml', 'w') as f:
+            yaml.dump(bot.config, f, default_flow_style=False)
+        
+        logger.info("Removed %s from watchlist", ticker)
+        bot.notifier.send(f"🗑️ Removed **{ticker}** from watchlist")
+        
+        return jsonify({
+            'success': True,
+            'message': f'{ticker} removed from watchlist',
+            'watchlist': watchlist
+        })
+    except Exception as exc:
+        logger.error("Failed to update config: %s", exc)
+        return jsonify({'error': 'Failed to save configuration'}), 500
+
+
 def main() -> None:
     """Main entry point for the bot."""
     try:
