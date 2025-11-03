@@ -1,17 +1,30 @@
 [Unit]
 Description=Options Scalping Bot with Web Dashboard and ngrok
-After=network.target
+After=network-online.target
+Wants=network-online.target
 
 [Service]
 Type=simple
 User=pi
 WorkingDirectory=/home/pi/scalp-bot
 
-# Include ngrok in PATH (usually in /usr/local/bin or /usr/bin)
+# Include ngrok in PATH
 Environment="PATH=/home/pi/scalp-bot/venv/bin:/usr/local/bin:/usr/bin:/bin"
+Environment="HOME=/home/pi"
 
-# Start the bot (will automatically start ngrok service)
+# Kill any existing ngrok processes before starting
+ExecStartPre=/bin/bash -c 'pkill -9 ngrok || true'
+ExecStartPre=/bin/sleep 2
+
+# Start ngrok in background first
+ExecStartPre=/bin/bash -c 'nohup ngrok http 8001 > /dev/null 2>&1 &'
+ExecStartPre=/bin/sleep 5
+
+# Start the bot (will detect ngrok tunnel)
 ExecStart=/home/pi/scalp-bot/venv/bin/python3 /home/pi/scalp-bot/main.py
+
+# Stop ngrok when service stops
+ExecStopPost=/bin/bash -c 'pkill -9 ngrok || true'
 
 # Restart on failure
 Restart=always
