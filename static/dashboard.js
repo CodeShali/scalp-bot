@@ -59,12 +59,88 @@ async function addTicker() {
         return;
     }
     
-    alert(`Watchlist management coming soon! You can edit config.yaml to add ${ticker} for now.`);
-    input.value = '';
+    if (!/^[A-Z]{1,5}$/.test(ticker)) {
+        alert('Invalid ticker symbol. Use 1-5 letters only.');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/watchlist/add', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ ticker: ticker })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            input.value = '';
+            loadWatchlist(); // Reload watchlist
+            showNotification(`✅ Added ${ticker} to watchlist`, 'success');
+        } else {
+            showNotification(`❌ ${data.error || 'Failed to add ticker'}`, 'error');
+        }
+    } catch (error) {
+        console.error('Error adding ticker:', error);
+        showNotification('❌ Failed to add ticker', 'error');
+    }
 }
 
 async function removeTicker(ticker) {
-    alert(`Watchlist management coming soon! Edit config.yaml to remove ${ticker} for now.`);
+    if (!confirm(`Remove ${ticker} from watchlist?`)) {
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/watchlist/remove', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ ticker: ticker })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            loadWatchlist(); // Reload watchlist
+            showNotification(`✅ Removed ${ticker} from watchlist`, 'success');
+        } else {
+            showNotification(`❌ ${data.error || 'Failed to remove ticker'}`, 'error');
+        }
+    } catch (error) {
+        console.error('Error removing ticker:', error);
+        showNotification('❌ Failed to remove ticker', 'error');
+    }
+}
+
+function showNotification(message, type = 'info') {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.textContent = message;
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 15px 20px;
+        background: ${type === 'success' ? '#00ff41' : type === 'error' ? '#ff0000' : '#00aaff'};
+        color: #000;
+        border-radius: 5px;
+        font-weight: bold;
+        z-index: 10000;
+        animation: slideIn 0.3s ease-out;
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Remove after 3 seconds
+    setTimeout(() => {
+        notification.style.animation = 'slideOut 0.3s ease-out';
+        setTimeout(() => notification.remove(), 300);
+    }, 3000);
 }
 
 // Update dashboard data
