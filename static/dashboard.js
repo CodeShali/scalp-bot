@@ -97,13 +97,14 @@ async function removeTicker(ticker) {
     }
 }
 
-// Control button handlers
-document.getElementById('addTickerBtn').addEventListener('click', addTicker);
-document.getElementById('newTicker').addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') addTicker();
-});
+// Control button handlers - wrapped in DOMContentLoaded to ensure elements exist
+function initializeControls() {
+    document.getElementById('addTickerBtn').addEventListener('click', addTicker);
+    document.getElementById('newTicker').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') addTicker();
+    });
 
-document.getElementById('pauseBtn').addEventListener('click', async () => {
+    document.getElementById('pauseBtn').addEventListener('click', async () => {
     try {
         const response = await fetch('/api/controls/pause', { method: 'POST' });
         const data = await response.json();
@@ -131,17 +132,18 @@ document.getElementById('resumeBtn').addEventListener('click', async () => {
     }
 });
 
-document.getElementById('forceCloseBtn').addEventListener('click', async () => {
-    if (!confirm('Are you sure you want to force close the current position?')) return;
-    
-    try {
-        const response = await fetch('/api/controls/force_close', { method: 'POST' });
-        const data = await response.json();
-        alert(data.message);
-    } catch (error) {
-        alert('Error closing position');
-    }
-});
+    document.getElementById('forceCloseBtn').addEventListener('click', async () => {
+        if (!confirm('Are you sure you want to force close the current position?')) return;
+        
+        try {
+            const response = await fetch('/api/controls/force_close', { method: 'POST' });
+            const data = await response.json();
+            alert(data.message);
+        } catch (error) {
+            alert('Error closing position');
+        }
+    });
+}
 
 // Update dashboard data
 function updateDashboard() {
@@ -299,8 +301,11 @@ function updateDashboard() {
         });
 }
 
-// Initialize
-loadWatchlist();
-updateDashboard();
-setInterval(updateDashboard, 5000); // Refresh every 5 seconds
-setInterval(loadWatchlist, 30000); // Refresh watchlist every 30 seconds
+// Initialize when DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+    initializeControls();
+    loadWatchlist();
+    updateDashboard();
+    setInterval(updateDashboard, 5000); // Refresh every 5 seconds
+    setInterval(loadWatchlist, 30000); // Refresh watchlist every 30 seconds
+});
