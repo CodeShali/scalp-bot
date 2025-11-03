@@ -111,9 +111,9 @@ class ScalpingBot:
             except:
                 pass
             
-            # Start ngrok
+            # Start ngrok with browser warning skip
             self.ngrok_process = subprocess.Popen(
-                ["ngrok", "http", "8001"],
+                ["ngrok", "http", "8001", "--host-header", "rewrite"],
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
                 stdin=subprocess.DEVNULL,
