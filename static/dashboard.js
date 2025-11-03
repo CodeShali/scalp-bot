@@ -470,24 +470,35 @@ document.addEventListener('DOMContentLoaded', () => {
 async function loadSettings() {
     try {
         const response = await fetch('/api/status');
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
         const data = await response.json();
         
-        const trading = data.config?.trading || {};
-        const signals = data.config?.signals || {};
+        if (!data.config) {
+            throw new Error('Config not found in response');
+        }
+        
+        const trading = data.config.trading || {};
+        const signals = data.config.signals || {};
         
         // Trading parameters (convert decimals to percentages)
-        document.getElementById('profitTarget').value = (trading.profit_target_pct || 0.15) * 100;
-        document.getElementById('stopLoss').value = (trading.stop_loss_pct || 0.07) * 100;
-        document.getElementById('riskPerTrade').value = (trading.max_risk_pct || 0.01) * 100;
-        document.getElementById('positionTimeout').value = trading.timeout_seconds || 300;
+        // Use ?? instead of || to handle 0 values correctly
+        document.getElementById('profitTarget').value = ((trading.profit_target_pct ?? 0.15) * 100).toFixed(0);
+        document.getElementById('stopLoss').value = ((trading.stop_loss_pct ?? 0.07) * 100).toFixed(0);
+        document.getElementById('riskPerTrade').value = ((trading.max_risk_pct ?? 0.01) * 100).toFixed(0);
+        document.getElementById('positionTimeout').value = trading.timeout_seconds ?? 300;
         
         // Safety limits (convert decimals to percentages)
-        document.getElementById('maxDailyLoss').value = (trading.max_daily_loss_pct || 0.03) * 100;
-        document.getElementById('maxTrades').value = trading.max_trades_per_day || 5;
+        document.getElementById('maxDailyLoss').value = ((trading.max_daily_loss_pct ?? 0.03) * 100).toFixed(0);
+        document.getElementById('maxTrades').value = trading.max_trades_per_day ?? 5;
         
         // Signal detection
-        document.getElementById('rsiCallMin').value = signals.rsi_call_min || 60;
-        document.getElementById('rsiPutMax').value = signals.rsi_put_max || 40;
+        document.getElementById('rsiCallMin').value = signals.rsi_call_min ?? 60;
+        document.getElementById('rsiPutMax').value = signals.rsi_put_max ?? 40;
+        
+        console.log('Settings loaded successfully');
     } catch (error) {
         console.error('Error loading settings:', error);
         alert('Failed to load settings: ' + error.message);
