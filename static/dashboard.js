@@ -424,11 +424,111 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     
     // Settings modal handlers
+    const modal = document.getElementById('settingsModal');
+    const settingsBtn = document.getElementById('settingsBtn');
+    const cancelBtn = document.getElementById('cancelSettings');
+    const saveBtn = document.getElementById('saveSettings');
+    const closeBtn = document.querySelector('.close');
+    
+    if (settingsBtn) {
+        settingsBtn.addEventListener('click', () => {
+            modal.style.display = 'block';
+            loadSettings();
+        });
+    }
+    
+    if (cancelBtn) {
+        cancelBtn.addEventListener('click', () => {
+            modal.style.display = 'none';
+        });
+    }
+    
+    if (closeBtn) {
+        closeBtn.addEventListener('click', () => {
+            modal.style.display = 'none';
+        });
+    }
+    
+    if (saveBtn) {
+        saveBtn.addEventListener('click', saveSettings);
+    }
+    
+    // Close modal when clicking outside
+    window.addEventListener('click', (event) => {
+        if (event.target === modal) {
+            modal.style.display = 'none';
+        }
+    });
+    
     loadWatchlist();
     updateDashboard();
     setInterval(updateDashboard, 5000); // Refresh every 5 seconds
     setInterval(loadWatchlist, 30000); // Refresh watchlist every 30 seconds
 });
+
+// Settings functions
+async function loadSettings() {
+    try {
+        const response = await fetch('/api/status');
+        const data = await response.json();
+        
+        // Trading parameters
+        document.getElementById('profitTarget').value = data.config.trading?.profit_target_pct || 15;
+        document.getElementById('stopLoss').value = data.config.trading?.stop_loss_pct || 7;
+        document.getElementById('riskPerTrade').value = data.config.trading?.max_risk_pct || 1;
+        document.getElementById('positionTimeout').value = data.config.trading?.timeout_seconds || 300;
+        
+        // Safety limits
+        document.getElementById('maxDailyLoss').value = data.config.trading?.max_daily_loss_pct || 3;
+        document.getElementById('maxTrades').value = data.config.trading?.max_trades_per_day || 5;
+        
+        // Signal detection
+        document.getElementById('rsiCallMin').value = data.config.signals?.rsi_call_min || 60;
+        document.getElementById('rsiPutMax').value = data.config.signals?.rsi_put_max || 40;
+    } catch (error) {
+        console.error('Error loading settings:', error);
+        alert('Failed to load settings');
+    }
+}
+
+async function saveSettings() {
+    const settings = {
+        trading: {
+            profit_target_pct: parseFloat(document.getElementById('profitTarget').value),
+            stop_loss_pct: parseFloat(document.getElementById('stopLoss').value),
+            max_risk_pct: parseFloat(document.getElementById('riskPerTrade').value),
+            timeout_seconds: parseInt(document.getElementById('positionTimeout').value),
+            max_daily_loss_pct: parseFloat(document.getElementById('maxDailyLoss').value),
+            max_trades_per_day: parseInt(document.getElementById('maxTrades').value)
+        },
+        signals: {
+            rsi_call_min: parseFloat(document.getElementById('rsiCallMin').value),
+            rsi_put_max: parseFloat(document.getElementById('rsiPutMax').value)
+        }
+    };
+    
+    try {
+        const response = await fetch('/api/settings', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(settings)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            alert('✅ Settings saved successfully!');
+            document.getElementById('settingsModal').style.display = 'none';
+        } else {
+            alert('❌ Failed to save settings: ' + (result.error || 'Unknown error'));
+        }
+    } catch (error) {
+        console.error('Error saving settings:', error);
+        alert('❌ Failed to save settings');
+    }
+}
 
 // Generate intelligent reasoning for ticker selection
 function generateSelectionReasoning(symbol, metrics, score) {
