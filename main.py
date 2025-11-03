@@ -51,7 +51,12 @@ class ScalpingBot:
         setup_logging(self.config)
         
         ScalpingBot._instance = self  # Store for dashboard access
-
+        
+        # Initialize ngrok management
+        self.ngrok_process = None
+        self.ngrok_url = None
+        self._ensure_ngrok_running()
+        
         self.notifier = DiscordNotifier(self.config)
 
         self.broker = BrokerClient(self.config)
@@ -78,81 +83,84 @@ class ScalpingBot:
         self._register_jobs()
         self._log_startup_info()
     
-    def _get_dashboard_url(self) -> str:
-        """Auto-detect dashboard URL (ngrok or local)."""
-        import requests
+    def _ensure_ngrok_running(self) -> None:
+        """Ensure ngrok is running and get its URL."""
         import subprocess
+        import signal
+        import requests
         import time
         
-        logger.info("Detecting dashboard URL...")
-        
-        # First, try to start ngrok if not running
         try:
-            logger.info("Checking if ngrok is running...")
-            response = requests.get("http://localhost:4040/api/tunnels", timeout=2)
-        except requests.exceptions.RequestException:
-            # ngrok not running, try to start it
-            logger.info("ngrok not running, starting ngrok http 8001...")
+            # Check if ngrok is already running
             try:
-                # Start ngrok in background
-                subprocess.Popen(
-                    ["ngrok", "http", "8001"],
-                    stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL,
-                    stdin=subprocess.DEVNULL
-                )
-                logger.info("Started ngrok, waiting for tunnel...")
-                time.sleep(5)  # Give ngrok time to start
-                
-                # Now check again
-                for attempt in range(3):
-                    try:
-                        response = requests.get("http://localhost:4040/api/tunnels", timeout=5)
-                        if response.status_code == 200:
-                            break
-                    except:
-                        pass
-                    time.sleep(2)
-                else:
-                    raise Exception("Failed to start ngrok")
-                    
-            except Exception as e:
-                logger.warning("Could not start ngrok automatically: %s", e)
-                logger.warning("Please start ngrok manually: ngrok http 8001")
-                # Fall back to localhost
-                dashboard_url = self.config.get("dashboard", {}).get("public_url", "http://localhost:8001")
-                logger.info("Using fallback dashboard URL: %s", dashboard_url)
-                return dashboard_url
-        
-        # Now try to get ngrok URL from API
-        try:
-            logger.info("Checking for ngrok tunnel at localhost:4040...")
-            if 'response' not in locals():
-                response = requests.get("http://localhost:4040/api/tunnels", timeout=3)
+                response = requests.get("http://localhost:4040/api/tunnels", timeout=2)
+                if response.status_code == 200:
+                    tunnels = response.json().get("tunnels", [])
+                    https_tunnels = [t for t in tunnels if t.get("proto") == "https"]
+                    if https_tunnels:
+                        self.ngrok_url = https_tunnels[0].get("public_url")
+                        logger.info("ngrok already running with URL: %s", self.ngrok_url)
+                        return
+            except:
+                pass
             
-            if response.status_code == 200:
-                data = response.json()
-                tunnels = data.get("tunnels", [])
-                logger.info("Found %d tunnels", len(tunnels))
-                
-                for tunnel in tunnels:
-                    if tunnel.get("proto") == "https":
-                        ngrok_url = tunnel.get("public_url")
-                        logger.info("✅ Detected ngrok URL: %s", ngrok_url)
-                        return ngrok_url
-                logger.warning("Found tunnels but no HTTPS tunnel")
-            else:
-                logger.warning("ngrok API returned status %s", response.status_code)
-                
-        except requests.exceptions.RequestException as e:
-            logger.warning("Could not connect to ngrok API: %s", e)
+            # Start ngrok
+            logger.info("Starting ngrok service...")
+            self.ngrok_process = subprocess.Popen(
+                ["ngrok", "http", "8001"],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                stdin=subprocess.DEVNULL,
+                preexec_fn=os.setsid  # Create process group for clean shutdown
+            )
+            
+            # Wait for ngrok to start and get URL
+            logger.info("Waiting for ngrok tunnel to establish...")
+            for attempt in range(10):  # Try for 20 seconds
+                try:
+                    response = requests.get("http://localhost:4040/api/tunnels", timeout=3)
+                    if response.status_code == 200:
+                        tunnels = response.json().get("tunnels", [])
+                        https_tunnels = [t for t in tunnels if t.get("proto") == "https"]
+                        if https_tunnels:
+                            self.ngrok_url = https_tunnels[0].get("public_url")
+                            logger.info("✅ ngrok service started successfully: %s", self.ngrok_url)
+                            return
+                except:
+                    pass
+                time.sleep(2)
+            
+            # If we get here, ngrok failed to start
+            logger.error("Failed to start ngrok service after 20 seconds")
+            logger.warning("Dashboard will be available at http://localhost:8001 only")
+            self.ngrok_url = "http://localhost:8001"
+            
+        except FileNotFoundError:
+            logger.warning("ngrok not installed. Install from https://ngrok.com/download")
+            logger.warning("Dashboard will be available at http://localhost:8001 only")
+            self.ngrok_url = "http://localhost:8001"
         except Exception as e:
-            logger.warning("Error detecting ngrok: %s", e)
-        
-        # Fallback to config or localhost
-        dashboard_url = self.config.get("dashboard", {}).get("public_url", "http://localhost:8001")
-        logger.info("Using fallback dashboard URL: %s", dashboard_url)
-        return dashboard_url
+            logger.error("Error managing ngrok: %s", e)
+            self.ngrok_url = "http://localhost:8001"
+    
+    def _stop_ngrok(self) -> None:
+        """Stop the ngrok process if we started it."""
+        if self.ngrok_process:
+            try:
+                logger.info("Stopping ngrok service...")
+                os.killpg(os.getpgid(self.ngrok_process.pid), signal.SIGTERM)
+                self.ngrok_process.wait(timeout=5)
+                logger.info("ngrok service stopped")
+            except Exception as e:
+                logger.warning("Error stopping ngrok: %s", e)
+                try:
+                    self.ngrok_process.kill()
+                except:
+                    pass
+    
+    def _get_dashboard_url(self) -> str:
+        """Return the dashboard URL (managed by ngrok service)."""
+        return self.ngrok_url or "http://localhost:8001"
     
     def _log_startup_info(self) -> None:
         """Log bot configuration and status at startup."""
@@ -1219,8 +1227,18 @@ def api_update_settings():
 
 def main() -> None:
     """Main entry point for the bot."""
+    import atexit
+    
     try:
         bot = ScalpingBot()
+        
+        # Register cleanup function
+        def cleanup():
+            logger.info("Performing cleanup...")
+            bot._stop_ngrok()
+            logger.info("Cleanup complete")
+        
+        atexit.register(cleanup)
         
         # Start dashboard first
         bot.start_dashboard()
