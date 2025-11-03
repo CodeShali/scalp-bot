@@ -6,14 +6,15 @@ Wants=network-online.target
 [Service]
 Type=simple
 User=pi
+# IMPORTANT: Change this to your actual bot directory!
 WorkingDirectory=/home/pi/scalp-bot
 
-# Environment
+# Environment - uses WorkingDirectory
 Environment="PATH=/home/pi/scalp-bot/venv/bin:/usr/local/bin:/usr/bin:/bin"
 Environment="HOME=/home/pi"
 
-# Just run main.py - it handles everything
-ExecStart=/home/pi/scalp-bot/venv/bin/python3 main.py
+# Run main.py using relative path from WorkingDirectory
+ExecStart=venv/bin/python3 main.py
 
 # Restart on failure
 Restart=always
