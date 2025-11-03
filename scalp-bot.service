@@ -1,0 +1,21 @@
+[Unit]
+Description=Options Scalping Bot with Web Dashboard
+After=network.target
+
+[Service]
+Type=simple
+User=pi
+WorkingDirectory=/home/pi/scalp-bot
+Environment="PATH=/home/pi/scalp-bot/venv/bin"
+ExecStart=/home/pi/scalp-bot/venv/bin/python3 /home/pi/scalp-bot/main.py
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+# Resource limits
+LimitNOFILE=65536
+MemoryLimit=512M
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scalp Bot | Terminal</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/dashboard.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="header-left">
+                <h1>⚡ SCALP-BOT TERMINAL</h1>
+                <div class="subtitle">AUTOMATED OPTIONS TRADING SYSTEM</div>
+            </div>
+            <span id="botStatus" class="status-badge loading">INITIALIZING...</span>
+        </div>
+        
+        <!-- Control Panel -->
+        <div class="control-panel">
+            <div class="market-status" id="marketStatus">
+                <div class="status-label">MARKET STATUS</div>
+                <div class="status-value">Loading...</div>
+            </div>
+            <div class="daily-limits" id="dailyLimits">
+                <div class="limit-item">
+                    <span>TRADES</span>
+                    <span id="tradesCount">0/5</span>
+                </div>
+                <div class="limit-item">
+                    <span>DAILY P/L</span>
+                    <span id="dailyPnl">0.00%</span>
+                </div>
+            </div>
+            <div class="controls">
+                <button id="pauseBtn" class="btn btn-warning">PAUSE</button>
+                <button id="resumeBtn" class="btn btn-success" style="display:none;">RESUME</button>
+                <button id="forceCloseBtn" class="btn btn-danger">FORCE CLOSE</button>
+            </div>
+        </div>
+        
+        <!-- Stats Grid -->
+        <div class="grid">
+            <div class="card">
+                <div class="card-title">ACCOUNT OVERVIEW</div>
+                <div class="stat">
+                    <span class="stat-label">Cash Available</span>
+                    <span class="stat-value" id="cash">$0.00</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Buying Power</span>
+                    <span class="stat-value" id="buyingPower">$0.00</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Portfolio Value</span>
+                    <span class="stat-value" id="portfolioValue">$0.00</span>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-title">PERFORMANCE METRICS</div>
+                <div class="stat">
+                    <span class="stat-label">Total Trades</span>
+                    <span class="stat-value" id="totalTrades">0</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Win Rate</span>
+                    <span class="stat-value" id="winRate">0%</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Average P/L</span>
+                    <span class="stat-value" id="avgPnl">0.00%</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Total P/L</span>
+                    <span class="stat-value" id="totalPnl">0.00%</span>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-title">TARGET SYMBOL</div>
+                <div id="tickerInfo" class="empty-state">AWAITING PRE-MARKET SCAN...</div>
+            </div>
+            
+            <div class="card">
+                <div class="card-title">ACTIVE POSITION</div>
+                <div id="positionInfo" class="empty-state">NO POSITION DETECTED</div>
+            </div>
+        </div>
+        
+        <!-- Today's Trades -->
+        <div class="card" style="margin-bottom: 25px;">
+            <div class="card-title">TODAY'S TRADES</div>
+            <div style="overflow-x: auto;">
+                <table class="trades-table" id="tradesTable">
+                    <thead>
+                        <tr>
+                            <th>TIME</th>
+                            <th>SYMBOL</th>
+                            <th>TYPE</th>
+                            <th>QTY</th>
+                            <th>ENTRY</th>
+                            <th>EXIT</th>
+                            <th>P/L</th>
+                            <th>REASON</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tradesBody">
+                        <tr>
+                            <td colspan="8" class="empty-state">NO TRADES EXECUTED TODAY</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- System Logs -->
+        <div class="card">
+            <div class="card-title">SYSTEM LOGS</div>
+            <div class="logs-container" id="logsContainer">
+                <div class="log-line loading">LOADING SYSTEM LOGS...</div>
+            </div>
+        </div>
+        
+        <div class="refresh-time">
+            LAST UPDATE: <span id="lastUpdate">--:--:--</span>
+        </div>
+    </div>
+    
+    <script src="/static/dashboard.js"></script>
+</body>
+</html>

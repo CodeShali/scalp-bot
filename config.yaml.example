@@ -1,0 +1,82 @@
+# Trading mode: paper or live
+mode: paper
+
+# Alpaca API Configuration
+alpaca:
+  paper:
+    api_key_id: "YOUR_PAPER_API_KEY"
+    api_secret_key: "YOUR_PAPER_API_SECRET"
+    endpoint: "https://paper-api.alpaca.markets"  # Base URL (library adds /v2)
+    data_feed: "iex"  # Free IEX feed for paper trading
+  live:
+    api_key_id: "YOUR_LIVE_API_KEY"
+    api_secret_key: "YOUR_LIVE_API_SECRET"
+    endpoint: "https://api.alpaca.markets"  # Base URL (library adds /v2)
+    data_feed: "sip"  # Requires AlgoTrader Plus subscription ($99/mo)
+
+# Watchlist Configuration
+watchlist:
+  symbols:
+    - AAPL
+    - MSFT
+    - TSLA
+    - NVDA
+    - AMD
+    - GOOGL
+    - AMZN
+    - META
+    - SPY
+    - QQQ
+
+# Pre-Market Scanning Configuration
+scanning:
+  run_time: "08:30"  # ET time for daily scan
+  weights:
+    premarket_volume: 0.3
+    gap_percent: 0.3
+    iv_rank: 0.2
+    option_open_interest: 0.1
+    atr: 0.1
+  thresholds:
+    min_premarket_volume: 100000
+
+# Signal Detection Configuration
+signals:
+  ema_short_period: 9
+  ema_long_period: 21
+  rsi_period: 14
+  rsi_call_min: 60
+  rsi_put_max: 40
+  volume_multiplier: 1.2
+  volume_lookback: 20
+  lookback_minutes: 180
+  poll_interval_seconds: 15
+  trading_windows:
+    - "09:30-10:30"  # Market open
+    - "12:00-13:00"  # Midday
+    - "15:00-16:00"  # Market close
+
+# Trading Configuration
+trading:
+  max_risk_pct: 0.01  # Risk 1% of capital per trade
+  timeout_seconds: 300  # 5 minute timeout
+  profit_target_pct: 0.15  # 15% profit target
+  stop_loss_pct: 0.07  # 7% stop loss
+  end_of_day_exit: "15:55"  # Force exit 5 min before close
+  monitor_interval_seconds: 5
+  max_option_dte_days: 1  # 0DTE or 1DTE only
+  atm_tolerance_pct: 0.005  # 0.5% ATM tolerance
+  max_otm_pct: 0.02  # Max 2% OTM
+  
+  # Safety Limits
+  max_daily_loss_pct: 0.03  # Stop trading after 3% daily loss
+  max_trades_per_day: 5  # Maximum number of trades allowed per day
+
+# Discord Notifications
+notifications:
+  discord_webhook_url: "https://discord.com/api/webhooks/YOUR_WEBHOOK_ID/YOUR_WEBHOOK_TOKEN"
+
+# Logging Configuration
+logging:
+  level: INFO  # DEBUG, INFO, WARNING, ERROR
+  file: logs/bot.log
