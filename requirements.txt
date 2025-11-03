@@ -1,9 +1,11 @@
 alpaca-py
+alpaca-trade-api
 APScheduler
 Flask
 numpy
 openai
 pandas
+pytz
 PyYAML
 requests
 ta
