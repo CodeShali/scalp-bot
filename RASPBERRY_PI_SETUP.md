@@ -80,8 +80,10 @@ nano config.yaml
 Update these sections:
 - Alpaca API keys (paper or live)
 - Discord webhook URL
+- OpenAI API key (for news sentiment)
 - Watchlist symbols
 - Trading parameters
+- **NEW**: `max_active_tickers: 3` (monitor top 3 tickers)
 
 ### Install Dashboard Dependencies
 
@@ -228,17 +230,26 @@ sudo ufw allow 8001/tcp  # Dashboard
 sudo ufw enable
 ```
 
-## 📊 Dashboard Features
+## 📊 Dashboard Features (Updated!)
 
-Your web dashboard shows:
+Your web dashboard now includes:
 
-- **Bot Status**: Running/stopped indicator
+### Core Features:
+- **Bot Status**: Running/stopped indicator with controls
 - **Account Balance**: Cash, buying power, portfolio value
 - **Performance Stats**: Win rate, average P/L, total P/L
-- **Ticker of Day**: Currently selected symbol
+- **Active Tickers**: Top 3 monitored tickers with ranks (🥇🥈🥉)
 - **Current Position**: Live P/L for open position
 - **Today's Trades**: All trades executed today
-- **Recent Logs**: Live log feed (last 30 lines)
+
+### NEW Features:
+- 🌈 **Colorful Matrix Background** - Beautiful rainbow falling code
+- 🎯 **Multi-Ticker Display** - See all 3 active tickers being monitored
+- 💡 **Intelligent Reasoning** - Detailed explanation of why tickers were selected
+- 📰 **News Sentiment** - AI-powered news analysis in metrics
+- 📊 **Enhanced Logs** - Search, filter by level, pause, download
+- ⚙️ **Settings Panel** - Configure bot parameters from UI
+- 🤖 **TARA Branding** - New name and professional identity
 
 **Auto-refresh**: Dashboard updates every 5 seconds automatically.
 
@@ -331,12 +342,34 @@ vcgencmd measure_temp
 
 ## 🔄 Updates and Backups
 
-### Update Bot Code
+### Update Bot Code (NEW: Automated Script!)
 
+**Quick Update (Recommended):**
 ```bash
 cd /home/pi/scalp-bot
-git pull
+./deploy.sh
+```
+This script automatically:
+- Pulls latest code
+- Updates dependencies
+- Checks configuration
+- Restarts service
+- Verifies deployment
+
+**Manual Update:**
+```bash
+cd /home/pi/scalp-bot
+git pull origin main
+pip3 install -r requirements.txt --upgrade
 sudo systemctl restart scalp-bot
+```
+
+**Force Update (if conflicts):**
+```bash
+cd /home/pi/scalp-bot
+git fetch origin
+git reset --hard origin/main
+./deploy.sh
 ```
 
 ### Backup Configuration
