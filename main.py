@@ -12,7 +12,6 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
 from flask import Flask, render_template, jsonify, request
 import pandas as pd
-from pyngrok import ngrok
 
 from broker import BrokerClient
 from monitor import PositionMonitor
@@ -708,7 +707,7 @@ class ScalpingBot:
         return status
     
     def start_dashboard(self) -> None:
-        """Start web dashboard in background thread with ngrok tunnel."""
+        """Start web dashboard in background thread."""
         def run_dashboard():
             logger.info("Starting web dashboard on port 8001")
             app.run(host='0.0.0.0', port=8001, debug=False, use_reloader=False)
@@ -718,39 +717,8 @@ class ScalpingBot:
         
         # Give Flask a moment to start
         time.sleep(2)
-        
-        # Start ngrok tunnel
-        try:
-            public_url = ngrok.connect(8001, bind_tls=True)
-            logger.info("=" * 70)
-            logger.info("Dashboard started successfully!")
-            logger.info("=" * 70)
-            logger.info("Local URL:  http://localhost:8001")
-            logger.info("Public URL: %s", public_url)
-            logger.info("=" * 70)
-            
-            # Send URL via Discord
-            if self.notifier.is_configured():
-                from datetime import datetime
-                embed = {
-                    "title": "🌐 Dashboard Online",
-                    "description": "Trading dashboard is now accessible",
-                    "color": 5763719,  # Green
-                    "fields": [
-                        {"name": "🏠 Local Access", "value": f"`http://localhost:8001`", "inline": False},
-                        {"name": "🌍 Public Access", "value": f"[Click Here]({public_url})", "inline": False},
-                    ],
-                    "footer": {"text": "Scalp Bot | Dashboard"},
-                    "timestamp": datetime.utcnow().isoformat()
-                }
-                self.notifier.send("", embeds=[embed])
-            
-            # Store for API access
-            self.dashboard_url = str(public_url)
-        except Exception as exc:
-            logger.error("Failed to start ngrok tunnel: %s", exc)
-            logger.info("Dashboard available locally at: http://0.0.0.0:8001")
-            self.dashboard_url = "http://localhost:8001"
+        logger.info("Dashboard started on http://localhost:8001")
+        logger.info("Public URL: %s", self.ngrok_url)
 
 
 # ==================== Dashboard Routes ====================
