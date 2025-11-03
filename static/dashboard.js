@@ -472,33 +472,36 @@ async function loadSettings() {
         const response = await fetch('/api/status');
         const data = await response.json();
         
-        // Trading parameters
-        document.getElementById('profitTarget').value = data.config.trading?.profit_target_pct || 15;
-        document.getElementById('stopLoss').value = data.config.trading?.stop_loss_pct || 7;
-        document.getElementById('riskPerTrade').value = data.config.trading?.max_risk_pct || 1;
-        document.getElementById('positionTimeout').value = data.config.trading?.timeout_seconds || 300;
+        const trading = data.config?.trading || {};
+        const signals = data.config?.signals || {};
         
-        // Safety limits
-        document.getElementById('maxDailyLoss').value = data.config.trading?.max_daily_loss_pct || 3;
-        document.getElementById('maxTrades').value = data.config.trading?.max_trades_per_day || 5;
+        // Trading parameters (convert decimals to percentages)
+        document.getElementById('profitTarget').value = (trading.profit_target_pct || 0.15) * 100;
+        document.getElementById('stopLoss').value = (trading.stop_loss_pct || 0.07) * 100;
+        document.getElementById('riskPerTrade').value = (trading.max_risk_pct || 0.01) * 100;
+        document.getElementById('positionTimeout').value = trading.timeout_seconds || 300;
+        
+        // Safety limits (convert decimals to percentages)
+        document.getElementById('maxDailyLoss').value = (trading.max_daily_loss_pct || 0.03) * 100;
+        document.getElementById('maxTrades').value = trading.max_trades_per_day || 5;
         
         // Signal detection
-        document.getElementById('rsiCallMin').value = data.config.signals?.rsi_call_min || 60;
-        document.getElementById('rsiPutMax').value = data.config.signals?.rsi_put_max || 40;
+        document.getElementById('rsiCallMin').value = signals.rsi_call_min || 60;
+        document.getElementById('rsiPutMax').value = signals.rsi_put_max || 40;
     } catch (error) {
         console.error('Error loading settings:', error);
-        alert('Failed to load settings');
+        alert('Failed to load settings: ' + error.message);
     }
 }
 
 async function saveSettings() {
     const settings = {
         trading: {
-            profit_target_pct: parseFloat(document.getElementById('profitTarget').value),
-            stop_loss_pct: parseFloat(document.getElementById('stopLoss').value),
-            max_risk_pct: parseFloat(document.getElementById('riskPerTrade').value),
+            profit_target_pct: parseFloat(document.getElementById('profitTarget').value) / 100,
+            stop_loss_pct: parseFloat(document.getElementById('stopLoss').value) / 100,
+            max_risk_pct: parseFloat(document.getElementById('riskPerTrade').value) / 100,
             timeout_seconds: parseInt(document.getElementById('positionTimeout').value),
-            max_daily_loss_pct: parseFloat(document.getElementById('maxDailyLoss').value),
+            max_daily_loss_pct: parseFloat(document.getElementById('maxDailyLoss').value) / 100,
             max_trades_per_day: parseInt(document.getElementById('maxTrades').value)
         },
         signals: {
