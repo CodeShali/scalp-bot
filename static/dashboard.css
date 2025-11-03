@@ -84,5 +84,13 @@ body {
 .ticker-metric { background: rgba(0, 0, 0, 0.3); padding: 10px; border-radius: 4px; border-left: 3px solid #e0e0e0; }
 .ticker-metric-label { font-size: 10px; color: #666666; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
 .ticker-metric-value { font-size: 16px; color: #e0e0e0; font-weight: 600; }
+.metric-excellent { color: #00ff41 !important; text-shadow: 0 0 5px rgba(0, 255, 65, 0.5); }
+.metric-good { color: #00d9ff !important; }
+.metric-neutral { color: #ffa500 !important; }
+.metric-weak { color: #ff6b6b !important; }
 .selection-time { font-size: 11px; color: #666666; margin-top: 10px; text-align: right; }
+.selection-reasoning { background: rgba(0, 217, 255, 0.05); border-left: 3px solid #00d9ff; padding: 15px; margin: 15px 0; border-radius: 4px; }
+.reasoning-title { font-size: 14px; font-weight: 700; color: #00d9ff; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; }
+.reasoning-content { font-size: 13px; line-height: 1.8; color: #c0c0c0; }
+.reasoning-content strong { color: #ffffff; }
 @media (max-width: 768px) { .header { flex-direction: column; gap: 15px; text-align: center; } .grid { grid-template-columns: 1fr; } .control-panel { flex-direction: column; } }

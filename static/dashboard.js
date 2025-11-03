@@ -104,16 +104,27 @@ function updateDashboard() {
                 const metrics = ticker.metrics || {};
                 const selectionTime = ticker.selection_time ? new Date(ticker.selection_time).toLocaleString() : 'N/A';
                 
+                // Generate reasoning based on metrics
+                const reasoning = generateSelectionReasoning(ticker.symbol, metrics, ticker.score);
+                
                 let metricsHtml = '';
                 if (Object.keys(metrics).length > 0) {
                     metricsHtml = '<div class="ticker-metrics">';
                     for (const [key, value] of Object.entries(metrics)) {
                         const label = key.replace(/_/g, ' ').toUpperCase();
                         const formattedValue = typeof value === 'number' ? value.toFixed(2) : value;
+                        
+                        // Color code based on value
+                        let valueClass = 'ticker-metric-value';
+                        if (value >= 75) valueClass += ' metric-excellent';
+                        else if (value >= 60) valueClass += ' metric-good';
+                        else if (value >= 40) valueClass += ' metric-neutral';
+                        else valueClass += ' metric-weak';
+                        
                         metricsHtml += `
                             <div class="ticker-metric">
                                 <div class="ticker-metric-label">${label}</div>
-                                <div class="ticker-metric-value">${formattedValue}</div>
+                                <div class="${valueClass}">${formattedValue}</div>
                             </div>
                         `;
                     }
@@ -125,6 +136,10 @@ function updateDashboard() {
                         <div class="ticker-selection-header">
                             <div class="ticker-symbol">${ticker.symbol}</div>
                             <div class="ticker-score">Score: ${ticker.score.toFixed(3)}</div>
+                        </div>
+                        <div class="selection-reasoning">
+                            <div class="reasoning-title">📊 Why ${ticker.symbol} was selected:</div>
+                            <div class="reasoning-content">${reasoning}</div>
                         </div>
                         ${metricsHtml}
                         <div class="selection-time">Selected: ${selectionTime}</div>
@@ -304,3 +319,92 @@ document.addEventListener('DOMContentLoaded', () => {
     setInterval(updateDashboard, 5000); // Refresh every 5 seconds
     setInterval(loadWatchlist, 30000); // Refresh watchlist every 30 seconds
 });
+
+// Generate intelligent reasoning for ticker selection
+function generateSelectionReasoning(symbol, metrics, score) {
+    const reasons = [];
+    const weights = {
+        premarket_volume: 0.25,
+        gap_percent: 0.20,
+        news_sentiment: 0.15,
+        iv_rank: 0.15,
+        atr: 0.10,
+        option_open_interest: 0.10,
+        news_volume: 0.05
+    };
+    
+    // Analyze each metric and generate insights
+    const pmVol = metrics.premarket_volume || 0;
+    const gap = metrics.gap_percent || 0;
+    const newsSent = metrics.news_sentiment || 50;
+    const newsVol = metrics.news_volume || 0;
+    const ivRank = metrics.iv_rank || 0;
+    const atr = metrics.atr || 0;
+    const optOI = metrics.option_open_interest || 0;
+    
+    // Pre-market volume analysis
+    if (pmVol >= 75) {
+        reasons.push(`<strong>🔥 Exceptional pre-market activity</strong> - Volume is significantly above average, indicating strong institutional interest and potential for momentum.`);
+    } else if (pmVol >= 60) {
+        reasons.push(`<strong>📈 Strong pre-market volume</strong> - Above-average trading activity suggests increased attention from traders.`);
+    } else if (pmVol < 40) {
+        reasons.push(`<strong>⚠️ Lower pre-market volume</strong> - Other factors compensated for lighter early trading.`);
+    }
+    
+    // Gap analysis
+    if (gap >= 75) {
+        reasons.push(`<strong>🚀 Significant price gap</strong> - Large gap from previous close indicates a major catalyst or news event driving price action.`);
+    } else if (gap >= 60) {
+        reasons.push(`<strong>📊 Notable price gap</strong> - Moderate gap suggests positive momentum or market reaction.`);
+    }
+    
+    // News sentiment analysis (most important for context)
+    if (newsSent >= 75) {
+        reasons.push(`<strong>📰 Very positive news sentiment</strong> - Recent news articles are overwhelmingly bullish. AI analysis detected strong positive catalysts such as earnings beats, upgrades, or major announcements.`);
+    } else if (newsSent >= 60) {
+        reasons.push(`<strong>📰 Positive news sentiment</strong> - News coverage is favorable with bullish undertones detected by AI analysis.`);
+    } else if (newsSent <= 40 && newsSent > 0) {
+        reasons.push(`<strong>📰 Negative news sentiment</strong> - Despite bearish news, other technical factors made this the best available option.`);
+    } else if (newsVol > 60) {
+        reasons.push(`<strong>📢 High news volume</strong> - Significant media attention (${Math.round(newsVol / 5)} articles) indicates this stock is trending.`);
+    }
+    
+    // IV Rank analysis
+    if (ivRank >= 70) {
+        reasons.push(`<strong>💹 High implied volatility</strong> - Options are pricing in significant movement, creating favorable conditions for option scalping.`);
+    } else if (ivRank >= 55) {
+        reasons.push(`<strong>💹 Elevated volatility</strong> - Options show increased premium, good for potential quick gains.`);
+    }
+    
+    // Option OI analysis
+    if (optOI >= 70) {
+        reasons.push(`<strong>🎯 Strong options activity</strong> - High open interest in 0DTE/1DTE options indicates active options market with good liquidity.`);
+    } else if (optOI >= 55) {
+        reasons.push(`<strong>🎯 Decent options liquidity</strong> - Sufficient open interest for smooth entry and exit.`);
+    }
+    
+    // ATR analysis
+    if (atr >= 70) {
+        reasons.push(`<strong>⚡ High volatility range</strong> - Recent price swings suggest potential for quick scalping opportunities.`);
+    }
+    
+    // Overall score interpretation
+    if (score >= 0.75) {
+        reasons.unshift(`<strong>🏆 Top-tier opportunity</strong> - This ticker scored exceptionally high (${(score * 100).toFixed(1)}/100) across multiple weighted factors.`);
+    } else if (score >= 0.60) {
+        reasons.unshift(`<strong>✅ Strong candidate</strong> - Solid score (${(score * 100).toFixed(1)}/100) with multiple favorable indicators.`);
+    } else {
+        reasons.unshift(`<strong>📊 Best available option</strong> - While not perfect (${(score * 100).toFixed(1)}/100), this was the highest-scoring ticker in today's watchlist.`);
+    }
+    
+    // Add weighted contribution insight
+    const topMetrics = Object.entries(metrics)
+        .map(([key, value]) => ({ key, value, weight: weights[key] || 0, contribution: value * (weights[key] || 0) }))
+        .sort((a, b) => b.contribution - a.contribution)
+        .slice(0, 3);
+    
+    const topContributors = topMetrics.map(m => m.key.replace(/_/g, ' ')).join(', ');
+    reasons.push(`<strong>🎯 Key drivers:</strong> ${topContributors} contributed most to the selection score.`);
+    
+    return reasons.join('<br><br>');
+}
