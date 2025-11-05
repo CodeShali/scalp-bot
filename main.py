@@ -9,7 +9,8 @@ import hashlib
 import subprocess
 from collections import deque
 from datetime import datetime, timedelta
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, List
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
@@ -475,23 +476,51 @@ class ScalpingBot:
                 return
 
             logger.info("🎯 No open positions - checking for new signals...")
+            logger.info(f"⚡ Checking {len(active_tickers)} tickers in PARALLEL...")
             
-            # Check each active ticker for signals (in rank order)
-            for ticker_info in active_tickers:
+            # Check all tickers in parallel using ThreadPoolExecutor
+            def check_ticker(ticker_info):
+                """Check a single ticker for signals."""
                 ticker = ticker_info["symbol"]
                 rank = ticker_info.get("rank", 1)
                 
-                logger.info(f"\n{'='*40}")
-                logger.info(f"Checking #{rank} ticker: {ticker}")
-                logger.info(f"{'='*40}")
+                logger.info(f"🔍 [{rank}] Starting check for {ticker}...")
                 
-                signal_payload = self.signal_detector.evaluate(ticker)
-                if signal_payload:
-                    logger.info(f"🚨 Signal detected on #{rank} ticker {ticker}: {signal_payload['direction'].upper()} at ${signal_payload['price']:.2f}")
-                    self._execute_trade(signal_payload)
-                    break  # Only take first signal
-                else:
-                    logger.info(f"✅ {ticker}: No signal - continuing to next ticker")
+                try:
+                    signal_payload = self.signal_detector.evaluate(ticker)
+                    if signal_payload:
+                        logger.info(f"🚨 [{rank}] SIGNAL FOUND for {ticker}: {signal_payload['direction'].upper()} at ${signal_payload['price']:.2f}")
+                        return (rank, ticker, signal_payload)
+                    else:
+                        logger.info(f"✅ [{rank}] {ticker}: No signal")
+                        return (rank, ticker, None)
+                except Exception as e:
+                    logger.error(f"❌ [{rank}] Error checking {ticker}: {e}")
+                    return (rank, ticker, None)
+            
+            # Execute all ticker checks in parallel
+            signals_found = []
+            with ThreadPoolExecutor(max_workers=len(active_tickers)) as executor:
+                # Submit all ticker checks
+                futures = {executor.submit(check_ticker, ticker_info): ticker_info 
+                          for ticker_info in active_tickers}
+                
+                # Collect results as they complete
+                for future in as_completed(futures):
+                    rank, ticker, signal = future.result()
+                    if signal:
+                        signals_found.append((rank, ticker, signal))
+            
+            # If any signals found, take the highest ranked one
+            if signals_found:
+                # Sort by rank (lowest rank = highest priority)
+                signals_found.sort(key=lambda x: x[0])
+                rank, ticker, signal_payload = signals_found[0]
+                
+                logger.info(f"🎯 Taking signal from #{rank} ticker {ticker} (highest priority)")
+                self._execute_trade(signal_payload)
+            else:
+                logger.info("✅ No signals found on any ticker")
                     
         except Exception as exc:  # noqa: BLE001
             logger.exception("Error while evaluating signals: %s", exc)
