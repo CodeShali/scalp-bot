@@ -1077,27 +1077,35 @@ def api_portfolio_history():
         # Alpaca provides portfolio history via portfolio_history endpoint
         timeframe = request.args.get('timeframe', '1D')
         
-        # Map timeframe to Alpaca parameters
-        timeframe_map = {
-            '1D': {'period': '1D', 'timeframe': '5Min'},
-            '1W': {'period': '1W', 'timeframe': '1H'},
-            '1M': {'period': '1M', 'timeframe': '1D'},
-            '3M': {'period': '3M', 'timeframe': '1D'},
-            'ALL': {'period': '1A', 'timeframe': '1D'}
-        }
-        
-        params = timeframe_map.get(timeframe, timeframe_map['1D'])
-        
         # Get account info for current value
         account = bot.broker.trading_client.get_account()
         current_equity = float(account.equity)
         
+        # Calculate date range based on timeframe
+        now = datetime.now(pytz.timezone('US/Eastern'))
+        timeframe_map = {
+            '1D': {'days': 1, 'timeframe': '5Min'},
+            '1W': {'days': 7, 'timeframe': '1H'},
+            '1M': {'days': 30, 'timeframe': '1D'},
+            '3M': {'days': 90, 'timeframe': '1D'},
+            'ALL': {'days': 365, 'timeframe': '1D'}
+        }
+        
+        params = timeframe_map.get(timeframe, timeframe_map['1D'])
+        date_start = (now - timedelta(days=params['days'])).date()
+        
         # Try to get portfolio history from Alpaca
         data = []
         try:
+            from alpaca.trading.requests import GetPortfolioHistoryRequest
+            from alpaca.trading.enums import PortfolioHistoryPeriod
+            
+            # Use the correct API parameters
             history = bot.broker.trading_client.get_portfolio_history(
-                period=params['period'],
-                timeframe=params['timeframe']
+                GetPortfolioHistoryRequest(
+                    date_start=date_start,
+                    timeframe=params['timeframe']
+                )
             )
             
             # Format data for chart

@@ -1067,45 +1067,48 @@ function applyTheme(darkMode) {
         });
         
     } else {
-        // ========== LIGHT THEME ==========
+        // ========== LIGHT THEME (Microsoft Teams Style) ==========
         matrixCanvas.style.display = 'none';
-        body.style.background = '#ffffff';
-        body.style.color = '#000000';
-        if (container) container.style.color = '#000000';
+        body.style.background = '#f3f2f1';  // Teams light gray background
+        body.style.color = '#252423';  // Teams dark text
+        if (container) container.style.color = '#252423';
         
-        // Cards
+        // Cards - white panels with shadow (Teams style)
         document.querySelectorAll('.card').forEach(card => {
-            card.style.background = '#f8f9fa';
-            card.style.borderColor = '#dee2e6';
-            card.style.color = '#000000';
+            card.style.background = '#ffffff';
+            card.style.borderColor = '#e1dfdd';
+            card.style.color = '#252423';
+            card.style.boxShadow = '0 1.6px 3.6px 0 rgba(0,0,0,.132), 0 0.3px 0.9px 0 rgba(0,0,0,.108)';
         });
         
-        // Card titles
+        // Card titles - Teams style
         document.querySelectorAll('.card-title').forEach(title => {
-            title.style.color = '#212529';
-            title.style.borderColor = '#dee2e6';
+            title.style.color = '#252423';
+            title.style.borderColor = '#edebe9';
             title.style.textShadow = 'none';
+            title.style.fontWeight = '600';
         });
         
-        // Header
+        // Header - white with shadow
         const header = document.querySelector('.header');
         if (header) {
-            header.style.background = '#f8f9fa';
-            header.style.borderColor = '#dee2e6';
+            header.style.background = '#ffffff';
+            header.style.borderColor = '#e1dfdd';
+            header.style.boxShadow = '0 1.6px 3.6px 0 rgba(0,0,0,.132), 0 0.3px 0.9px 0 rgba(0,0,0,.108)';
         }
         
         const h1 = document.querySelector('.header h1');
-        if (h1) h1.style.color = '#212529';
+        if (h1) h1.style.color = '#252423';
         
         const subtitle = document.querySelector('.subtitle');
-        if (subtitle) subtitle.style.color = '#6c757d';
+        if (subtitle) subtitle.style.color = '#605e5c';
         
-        // About button
+        // About button - Teams purple accent
         const aboutBtn = document.getElementById('aboutBtn');
         if (aboutBtn) {
-            aboutBtn.style.background = '#e9ecef';
-            aboutBtn.style.borderColor = '#495057';
-            aboutBtn.style.color = '#212529';
+            aboutBtn.style.background = '#f3f2f1';
+            aboutBtn.style.borderColor = '#8a8886';
+            aboutBtn.style.color = '#252423';
         }
         
         // Control buttons
@@ -1142,14 +1145,15 @@ function applyTheme(darkMode) {
             }
         });
         
-        // Stat labels and values
+        // Stat labels and values - Teams style
         document.querySelectorAll('.stat-label').forEach(label => {
-            label.style.color = '#6c757d';
+            label.style.color = '#605e5c';  // Teams secondary text
         });
         
         document.querySelectorAll('.stat-value').forEach(value => {
             if (!value.classList.contains('positive') && !value.classList.contains('negative')) {
-                value.style.color = '#212529';
+                value.style.color = '#252423';  // Teams primary text
+                value.style.fontWeight = '600';
             }
         });
         
@@ -1171,48 +1175,52 @@ function applyTheme(darkMode) {
             }
         }
         
-        // Empty states
+        // Empty states - Teams style
         document.querySelectorAll('.empty-state').forEach(el => {
-            el.style.color = '#6c757d';
+            el.style.color = '#605e5c';
         });
         
-        // Limit items
+        // Limit items - Teams style
         document.querySelectorAll('.limit-item span').forEach(span => {
             if (!span.id) {
-                span.style.color = '#6c757d';
+                span.style.color = '#605e5c';
             } else {
-                span.style.color = '#212529';
+                span.style.color = '#252423';
+                span.style.fontWeight = '600';
             }
         });
         
-        // Watchlist tags
+        // Watchlist tags - Teams style
         document.querySelectorAll('.ticker-tag').forEach(tag => {
-            tag.style.background = '#e9ecef';
-            tag.style.borderColor = '#6c757d';
-            tag.style.color = '#212529';
+            tag.style.background = '#f3f2f1';
+            tag.style.borderColor = '#8a8886';
+            tag.style.color = '#252423';
+            tag.style.fontWeight = '600';
         });
         
-        // Tables
+        // Tables - Teams style
         const table = document.querySelector('.trades-table');
         if (table) {
-            table.style.color = '#212529';
+            table.style.color = '#252423';
             document.querySelectorAll('.trades-table th').forEach(th => {
-                th.style.color = '#495057';
-                th.style.borderColor = '#dee2e6';
+                th.style.color = '#252423';
+                th.style.borderColor = '#edebe9';
+                th.style.background = '#faf9f8';
+                th.style.fontWeight = '600';
             });
             document.querySelectorAll('.trades-table td').forEach(td => {
-                td.style.color = '#212529';
-                td.style.borderColor = '#dee2e6';
+                td.style.color = '#252423';
+                td.style.borderColor = '#edebe9';
             });
         }
         
-        // Toggle switch labels
+        // Toggle switch labels - Teams style
         document.querySelectorAll('.toggle-switch').forEach(toggle => {
             const parent = toggle.parentElement;
             if (parent) {
                 parent.querySelectorAll('span').forEach(span => {
                     if (!span.classList.contains('toggle-slider')) {
-                        span.style.color = '#6c757d';
+                        span.style.color = '#605e5c';
                     }
                 });
             }
