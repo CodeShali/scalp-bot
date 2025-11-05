@@ -1,168 +1,4 @@
-// Portfolio Chart
-let portfolioChart = null;
-let portfolioData = {
-    '1D': [],
-    '1W': [],
-    '1M': [],
-    '3M': [],
-    'ALL': []
-};
-let currentRange = '1D';
-
-function initPortfolioChart() {
-    const ctx = document.getElementById('portfolioChart');
-    if (!ctx) {
-        console.error('Chart canvas not found!');
-        return;
-    }
-    
-    console.log('Creating chart...');
-    portfolioChart = new Chart(ctx.getContext('2d'), {
-        type: 'line',
-        data: {
-            labels: [],
-            datasets: [{
-                label: 'Portfolio Value',
-                data: [],
-                borderColor: '#e0e0e0',
-                backgroundColor: 'rgba(224, 224, 224, 0.15)',
-                borderWidth: 2,
-                fill: true,
-                tension: 0.4,
-                pointRadius: 0,
-                pointHoverRadius: 5,
-                pointHoverBackgroundColor: '#ffffff',
-                pointHoverBorderColor: '#e0e0e0',
-                pointHoverBorderWidth: 2
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            interaction: {
-                intersect: false,
-                mode: 'index'
-            },
-            plugins: {
-                legend: { display: false },
-                tooltip: {
-                    enabled: true,
-                    backgroundColor: 'rgba(10, 10, 10, 0.95)',
-                    titleColor: '#e0e0e0',
-                    bodyColor: '#ffffff',
-                    borderColor: '#e0e0e0',
-                    borderWidth: 1,
-                    padding: 10,
-                    displayColors: false,
-                    titleFont: { family: 'JetBrains Mono', size: 12, weight: 'bold' },
-                    bodyFont: { family: 'JetBrains Mono', size: 12 },
-                    callbacks: {
-                        title: (ctx) => ctx[0].label,
-                        label: (ctx) => formatCurrency(ctx.parsed.y)
-                    }
-                }
-            },
-            scales: {
-                x: {
-                    grid: { 
-                        display: true,
-                        color: 'rgba(224, 224, 224, 0.1)',
-                        drawBorder: false 
-                    },
-                    ticks: {
-                        color: '#999999',
-                        font: { family: 'JetBrains Mono', size: 10 },
-                        maxRotation: 0,
-                        maxTicksLimit: 8
-                    }
-                },
-                y: {
-                    grid: { 
-                        display: true,
-                        color: 'rgba(224, 224, 224, 0.15)',
-                        drawBorder: false 
-                    },
-                    ticks: {
-                        color: '#999999',
-                        font: { family: 'JetBrains Mono', size: 10 },
-                        maxTicksLimit: 6,
-                        callback: (val) => '$' + (val/1000).toFixed(1) + 'k'
-                    }
-                }
-            },
-            layout: {
-                padding: { left: 5, right: 5, top: 10, bottom: 5 }
-            }
-        }
-    });
-    console.log('Chart created successfully!');
-}
-
-function updatePortfolioChart(data) {
-    if (!portfolioChart) {
-        console.error('Chart not initialized!');
-        return;
-    }
-    
-    const range = currentRange;
-    let chartData = portfolioData[range] || [];
-    
-    console.log(`Updating chart with ${chartData.length} data points for ${range}`);
-    
-    if (chartData.length === 0) {
-        console.warn('No data to display');
-        return;
-    }
-    
-    // Update chart
-    portfolioChart.data.labels = chartData.map(d => d.time);
-    portfolioChart.data.datasets[0].data = chartData.map(d => d.value);
-    portfolioChart.update();
-    
-    console.log('Chart updated successfully');
-    
-    // Update stats
-    if (chartData.length > 0) {
-        const currentValue = chartData[chartData.length - 1].value;
-        const startValue = chartData[0].value;
-        const change = currentValue - startValue;
-        const changePercent = (change / startValue) * 100;
-        
-        console.log(`Stats: Value=${currentValue}, Change=${change}, Return=${changePercent}%`);
-        
-        document.getElementById('chartPortfolioValue').textContent = formatCurrency(currentValue);
-        document.getElementById('chartDailyPnl').textContent = formatCurrency(change);
-        document.getElementById('chartDailyPnl').className = 'stat-value ' + (change >= 0 ? 'positive' : 'negative');
-        document.getElementById('chartTotalReturn').textContent = formatPercent(changePercent);
-        document.getElementById('chartTotalReturn').className = 'stat-value ' + (changePercent >= 0 ? 'positive' : 'negative');
-    }
-}
-
-async function loadPortfolioData(timeframe) {
-    try {
-        console.log(`Loading portfolio data for ${timeframe}...`);
-        const response = await fetch(`/api/portfolio/history?timeframe=${timeframe}`);
-        const result = await response.json();
-        
-        if (result.error) {
-            console.error('Error loading portfolio data:', result.error);
-            return;
-        }
-        
-        console.log(`Loaded ${result.data?.length || 0} data points for ${timeframe}`);
-        
-        // Store data
-        portfolioData[timeframe] = result.data || [];
-        
-        // Update chart if this is the current timeframe
-        if (timeframe === currentRange) {
-            console.log('Updating chart...');
-            updatePortfolioChart();
-        }
-    } catch (error) {
-        console.error('Failed to load portfolio data:', error);
-    }
-}
+// Portfolio chart removed - not needed
 
 // Helper functions
 function formatCurrency(value) {
@@ -875,24 +711,7 @@ function generateSelectionReasoning(symbol, metrics, score) {
     return reasons.join('<br><br>');
 }
 
-// Chart range button handlers
-document.querySelectorAll('.chart-btn').forEach(btn => {
-    btn.addEventListener('click', function() {
-        // Remove active class from all buttons
-        document.querySelectorAll('.chart-btn').forEach(b => b.classList.remove('active'));
-        // Add active class to clicked button
-        this.classList.add('active');
-        // Update current range
-        const newRange = this.dataset.range;
-        currentRange = newRange;
-        // Load data for this timeframe if not already loaded
-        if (!portfolioData[newRange] || portfolioData[newRange].length === 0) {
-            loadPortfolioData(newRange);
-        } else {
-            updatePortfolioChart();
-        }
-    });
-});
+// Chart buttons removed
 
 // About popup
 document.getElementById('aboutBtn')?.addEventListener('click', () => {
@@ -977,18 +796,6 @@ function applyTheme(darkMode) {
             }
         });
         
-        // Chart buttons
-        document.querySelectorAll('.chart-btn').forEach(btn => {
-            if (btn.classList.contains('active')) {
-                btn.style.background = '#00d9ff';
-                btn.style.borderColor = '#00d9ff';
-                btn.style.color = '#000000';
-            } else {
-                btn.style.background = 'transparent';
-                btn.style.borderColor = '#666666';
-                btn.style.color = '#666666';
-            }
-        });
         
         // Stat labels and values
         document.querySelectorAll('.stat-label').forEach(label => {
@@ -1132,18 +939,6 @@ function applyTheme(darkMode) {
             }
         });
         
-        // Chart buttons
-        document.querySelectorAll('.chart-btn').forEach(btn => {
-            if (btn.classList.contains('active')) {
-                btn.style.background = '#007bff';
-                btn.style.borderColor = '#007bff';
-                btn.style.color = '#ffffff';
-            } else {
-                btn.style.background = 'transparent';
-                btn.style.borderColor = '#6c757d';
-                btn.style.color = '#495057';
-            }
-        });
         
         // Stat labels and values - Teams style
         document.querySelectorAll('.stat-label').forEach(label => {
@@ -1250,13 +1045,4 @@ document.addEventListener('DOMContentLoaded', () => {
     applyTheme(isDarkMode);
 });
 
-// Initialize chart on page load
-document.addEventListener('DOMContentLoaded', () => {
-    console.log('Initializing portfolio chart...');
-    initPortfolioChart();
-    console.log('Chart initialized, loading data...');
-    // Load initial data
-    loadPortfolioData('1D');
-    // Refresh every 30 seconds
-    setInterval(() => loadPortfolioData(currentRange), 30000);
-});
+// Portfolio chart removed - initialization code removed
