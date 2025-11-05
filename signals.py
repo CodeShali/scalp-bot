@@ -30,33 +30,46 @@ class SignalDetector:
 
     def evaluate(self, symbol: str) -> Optional[Dict[str, Any]]:
         """Evaluate the latest market data and emit a trade signal if criteria met."""
+        self.logger.info(f"🔍 Evaluating signal for {symbol}...")
+        
         now = eastern_now()
         trading_windows = self.signals_cfg.get("trading_windows", [])
         if trading_windows and not within_trading_windows(now, trading_windows):
-            self.logger.debug("Outside trading windows for %s at %s", symbol, now)
+            self.logger.info(f"⏰ {symbol}: Outside trading windows at {now.strftime('%H:%M:%S')}")
             return None
 
+        self.logger.info(f"📊 {symbol}: Fetching recent bars...")
         bars = self._get_recent_bars(symbol)
         if bars is None or len(bars) < max(self.signals_cfg.get("ema_long_period", 21) + 5, 30):
-            self.logger.debug("Insufficient bar data for %s", symbol)
+            self.logger.warning(f"⚠️ {symbol}: Insufficient bar data (got {len(bars) if bars else 0} bars)")
             return None
 
+        self.logger.info(f"📈 {symbol}: Got {len(bars)} bars, computing indicators...")
         df = self._prepare_dataframe(bars)
         self._compute_indicators(df)
 
         latest = df.iloc[-1]
         previous = df.iloc[-2]
 
+        self.logger.info(f"🎯 {symbol}: Checking EMA crossover (Short: {latest['ema_short']:.2f}, Long: {latest['ema_long']:.2f})...")
         direction = self._detect_crossover(previous, latest)
         if not direction:
+            self.logger.info(f"❌ {symbol}: No EMA crossover detected")
             return None
 
+        self.logger.info(f"✅ {symbol}: EMA crossover detected! Direction: {direction.upper()}")
+        self.logger.info(f"📊 {symbol}: Checking RSI filter (RSI: {latest['rsi']:.2f})...")
         if not self._passes_rsi_filter(direction, latest):
+            self.logger.info(f"❌ {symbol}: Failed RSI filter")
             return None
 
+        self.logger.info(f"✅ {symbol}: Passed RSI filter")
+        self.logger.info(f"📊 {symbol}: Checking volume filter...")
         if not self._passes_volume_filter(df):
+            self.logger.info(f"❌ {symbol}: Failed volume filter")
             return None
 
+        self.logger.info(f"✅ {symbol}: Passed volume filter")
         reason = f"EMA crossover confirmed with RSI {latest['rsi']:.2f} and volume filter"
 
         signal = {
@@ -71,7 +84,7 @@ class SignalDetector:
             "reason": reason,
         }
 
-        self.logger.info("Signal detected for %s: %s", symbol, signal)
+        self.logger.info(f"🚨 SIGNAL DETECTED for {symbol}: {direction.upper()} at ${latest['close']:.2f}")
         self.notifier.alert_signal(symbol, direction, reason)
         return signal
 

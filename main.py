@@ -429,56 +429,69 @@ class ScalpingBot:
     
     def _poll_for_signals(self) -> None:
         """Poll for trading signals with circuit breaker."""
+        logger.info("=" * 60)
+        logger.info("🔄 SIGNAL EVALUATION JOB STARTED")
+        logger.info("=" * 60)
+        
         # Skip if market is closed
         if not self._is_market_hours():
-            logger.debug("Market closed - skipping signal evaluation")
+            logger.info("🔒 Market is CLOSED - skipping signal evaluation")
             return
         
         # Skip if paused
         if self.paused:
-            logger.debug("Bot is paused - skipping signal evaluation")
+            logger.info("⏸️ Bot is PAUSED - skipping signal evaluation")
             return
         
         # Skip if circuit breaker open
         if self.circuit_open:
-            logger.debug("Circuit breaker open; skipping signal poll")
+            logger.info("🚨 Circuit breaker OPEN - skipping signal evaluation")
             return
         
-        # Check daily limits
-        allowed, reason = self._check_daily_limits()
-        if not allowed:
-            logger.debug("Daily limit check failed: %s", reason)
-            return
+        logger.info("✅ Market is OPEN - proceeding with signal evaluation")
         
         try:
             state = read_state()
             
-            # Get all active tickers (fallback to single ticker for backward compatibility)
+            # Get active tickers from state
             active_tickers = state.get("active_tickers", [])
+            
+            # If no active tickers, check if we have a ticker_of_the_day
             if not active_tickers:
-                # Fallback to old single ticker approach
                 ticker = state.get("ticker_of_the_day")
                 if ticker:
                     active_tickers = [{"symbol": ticker, "rank": 1}]
+                    logger.info(f"📌 Using ticker_of_the_day: {ticker}")
             
             if not active_tickers:
+                logger.info("⚠️ No active tickers to evaluate")
                 return
 
+            logger.info(f"📋 Active tickers: {[t['symbol'] for t in active_tickers]}")
+            
             open_position = state.get("open_position")
             if open_position:
+                logger.info(f"⏸️ Already have open position for {open_position.get('ticker')} - skipping new signals")
                 return
 
+            logger.info("🎯 No open positions - checking for new signals...")
+            
             # Check each active ticker for signals (in rank order)
             for ticker_info in active_tickers:
                 ticker = ticker_info["symbol"]
                 rank = ticker_info.get("rank", 1)
                 
+                logger.info(f"\n{'='*40}")
+                logger.info(f"Checking #{rank} ticker: {ticker}")
+                logger.info(f"{'='*40}")
+                
                 signal_payload = self.signal_detector.evaluate(ticker)
                 if signal_payload:
-                    logger.info("Signal detected on #%d ticker %s: %s at %.2f", 
-                               rank, ticker, signal_payload['direction'].upper(), signal_payload['price'])
+                    logger.info(f"🚨 Signal detected on #{rank} ticker {ticker}: {signal_payload['direction'].upper()} at ${signal_payload['price']:.2f}")
                     self._execute_trade(signal_payload)
                     break  # Only take first signal
+                else:
+                    logger.info(f"✅ {ticker}: No signal - continuing to next ticker")
                     
         except Exception as exc:  # noqa: BLE001
             logger.exception("Error while evaluating signals: %s", exc)

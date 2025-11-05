@@ -26,9 +26,11 @@ class PositionMonitor:
         self.logger = logging.getLogger(__name__)
 
     def evaluate(self) -> None:
+        self.logger.info("👀 Checking for open positions...")
         state = read_state()
         position_state = state.get("open_position")
         if not position_state:
+            self.logger.info("✅ No open positions to monitor")
             return
 
         option_symbol = position_state.get("option_symbol")
@@ -38,12 +40,17 @@ class PositionMonitor:
         ticker = position_state.get("ticker")
         entry_time = ensure_timezone(datetime.fromisoformat(position_state["entry_time"]))
 
+        self.logger.info(f"📊 Monitoring {ticker} {option_symbol}: {contracts} contracts @ ${entry_price:.2f}")
+        
         current_price = self.broker.get_option_market_price(option_symbol)
         if current_price is None:
-            self.logger.debug("No option price available for %s; skipping", option_symbol)
+            self.logger.warning(f"⚠️ No option price available for {option_symbol}")
             return
 
         pnl_pct = (current_price - entry_price) / entry_price * 100.0
+        pnl_dollar = (current_price - entry_price) * contracts * 100
+        
+        self.logger.info(f"💰 Current P/L: {pnl_pct:+.2f}% (${pnl_dollar:+.2f}) | Price: ${current_price:.2f}")
 
         reason = self._exit_reason(
             ticker=ticker,
