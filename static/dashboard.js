@@ -909,37 +909,85 @@ document.getElementById('aboutPopup')?.addEventListener('click', (e) => {
     }
 });
 
-// Background toggle with new switch
-let matrixEnabled = true;
+// Theme toggle (Dark/Light)
+let isDarkMode = true;
 
 document.getElementById('bgToggleSwitch')?.addEventListener('change', (e) => {
-    matrixEnabled = e.target.checked;
+    isDarkMode = e.target.checked;
     const matrixCanvas = document.getElementById('matrix-bg');
     const body = document.body;
+    const container = document.querySelector('.container');
     
-    if (matrixEnabled) {
-        // Matrix background (dark)
+    if (isDarkMode) {
+        // Dark theme with matrix
         matrixCanvas.style.display = 'block';
         body.style.background = '#000000';
+        body.style.color = '#c0c0c0';
+        container.style.color = '#c0c0c0';
+        
+        // Update all cards
+        document.querySelectorAll('.card').forEach(card => {
+            card.style.background = '#0a0a0a';
+            card.style.borderColor = '#e0e0e0';
+            card.style.color = '#c0c0c0';
+        });
+        
+        // Update header
+        document.querySelector('.header').style.background = '#0a0a0a';
+        document.querySelector('.header').style.borderColor = '#e0e0e0';
+        
     } else {
-        // Professional light background
+        // Light theme - white background, black text
         matrixCanvas.style.display = 'none';
-        body.style.background = 'linear-gradient(135deg, #1a1f2e 0%, #2d3748 50%, #1a1f2e 100%)';
+        body.style.background = '#ffffff';
+        body.style.color = '#000000';
+        container.style.color = '#000000';
+        
+        // Update all cards to light theme
+        document.querySelectorAll('.card').forEach(card => {
+            card.style.background = '#f8f9fa';
+            card.style.borderColor = '#dee2e6';
+            card.style.color = '#000000';
+        });
+        
+        // Update card titles
+        document.querySelectorAll('.card-title').forEach(title => {
+            title.style.color = '#212529';
+            title.style.borderColor = '#dee2e6';
+        });
+        
+        // Update stat labels
+        document.querySelectorAll('.stat-label').forEach(label => {
+            label.style.color = '#6c757d';
+        });
+        
+        // Update stat values
+        document.querySelectorAll('.stat-value').forEach(value => {
+            if (!value.classList.contains('positive') && !value.classList.contains('negative')) {
+                value.style.color = '#212529';
+            }
+        });
+        
+        // Update header
+        document.querySelector('.header').style.background = '#f8f9fa';
+        document.querySelector('.header').style.borderColor = '#dee2e6';
+        document.querySelector('.header h1').style.color = '#212529';
+        document.querySelector('.subtitle').style.color = '#6c757d';
     }
     
     // Save preference
-    localStorage.setItem('matrixEnabled', matrixEnabled);
+    localStorage.setItem('isDarkMode', isDarkMode);
 });
 
 // Load saved preference
 document.addEventListener('DOMContentLoaded', () => {
-    const saved = localStorage.getItem('matrixEnabled');
+    const saved = localStorage.getItem('isDarkMode');
     if (saved !== null) {
-        matrixEnabled = saved === 'true';
+        isDarkMode = saved === 'true';
         const toggle = document.getElementById('bgToggleSwitch');
         if (toggle) {
-            toggle.checked = matrixEnabled;
-            if (!matrixEnabled) {
+            toggle.checked = isDarkMode;
+            if (!isDarkMode) {
                 toggle.dispatchEvent(new Event('change'));
             }
         }
