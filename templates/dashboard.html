@@ -25,14 +25,50 @@
         
         <!-- About -->
         <div class="card" style="margin-bottom: 25px; background: linear-gradient(135deg, rgba(0, 217, 255, 0.05), rgba(0, 255, 65, 0.05));">
-            <div class="card-title">ℹ️ ABOUT TARA</div>
-            <p style="color: #999; line-height: 1.6; margin: 0;">
-                <strong style="color: #00d9ff;">TARA</strong> is an automated options scalping bot that trades 0DTE (zero days to expiration) and 1DTE options. 
-                Every morning at <strong style="color: #00ff41;">9:30 AM EST</strong>, it scans your watchlist, analyzes pre-market volume, gap percentages, 
-                IV rank, news sentiment, and option activity to select the top 3 tickers. It then monitors these stocks throughout the day, 
-                executing quick scalp trades with <strong style="color: #00ff41;">15% profit targets</strong> and <strong style="color: #ff0055;">7% stop losses</strong>. 
-                All trades are managed automatically with strict risk controls.
-            </p>
+            <div class="card-title">
+                ℹ️ ABOUT TARA
+                <button id="bgToggle" class="btn-secondary" style="padding: 6px 12px; font-size: 11px; float: right;">
+                    🎨 Toggle Background
+                </button>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-top: 10px;">
+                <div>
+                    <div style="color: #00d9ff; font-weight: bold; margin-bottom: 10px; font-size: 13px;">🎯 WHAT IT DOES</div>
+                    <ul style="color: #999; line-height: 1.8; margin: 0; padding-left: 20px; list-style: none;">
+                        <li style="margin-bottom: 8px;">📊 Automated 0DTE/1DTE options scalping</li>
+                        <li style="margin-bottom: 8px;">🔍 Pre-market analysis at <span style="color: #00ff41;">9:30 AM EST</span></li>
+                        <li style="margin-bottom: 8px;">🎯 Selects top 3 tickers daily</li>
+                        <li style="margin-bottom: 8px;">⚡ Quick scalp trades throughout the day</li>
+                    </ul>
+                </div>
+                <div>
+                    <div style="color: #00d9ff; font-weight: bold; margin-bottom: 10px; font-size: 13px;">📈 KEY METRICS</div>
+                    <ul style="color: #999; line-height: 1.8; margin: 0; padding-left: 20px; list-style: none;">
+                        <li style="margin-bottom: 8px;">✅ Pre-market volume & gap analysis</li>
+                        <li style="margin-bottom: 8px;">📰 AI-powered news sentiment (OpenAI)</li>
+                        <li style="margin-bottom: 8px;">💹 IV rank & option activity</li>
+                        <li style="margin-bottom: 8px;">🎲 ATR volatility measurement</li>
+                    </ul>
+                </div>
+                <div>
+                    <div style="color: #00d9ff; font-weight: bold; margin-bottom: 10px; font-size: 13px;">💰 RISK MANAGEMENT</div>
+                    <ul style="color: #999; line-height: 1.8; margin: 0; padding-left: 20px; list-style: none;">
+                        <li style="margin-bottom: 8px;">🟢 Profit Target: <span style="color: #00ff41; font-weight: bold;">15%</span></li>
+                        <li style="margin-bottom: 8px;">🔴 Stop Loss: <span style="color: #ff0055; font-weight: bold;">7%</span></li>
+                        <li style="margin-bottom: 8px;">🛡️ Max 5 trades per day</li>
+                        <li style="margin-bottom: 8px;">⚖️ Strict position sizing</li>
+                    </ul>
+                </div>
+                <div>
+                    <div style="color: #00d9ff; font-weight: bold; margin-bottom: 10px; font-size: 13px;">🤖 AUTOMATION</div>
+                    <ul style="color: #999; line-height: 1.8; margin: 0; padding-left: 20px; list-style: none;">
+                        <li style="margin-bottom: 8px;">🔄 Fully automated execution</li>
+                        <li style="margin-bottom: 8px;">📱 Discord notifications</li>
+                        <li style="margin-bottom: 8px;">📊 Real-time monitoring</li>
+                        <li style="margin-bottom: 8px;">🎯 No manual intervention needed</li>
+                    </ul>
+                </div>
+            </div>
         </div>
         
         <!-- Portfolio Chart -->

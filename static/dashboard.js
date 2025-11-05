@@ -894,6 +894,39 @@ document.querySelectorAll('.chart-btn').forEach(btn => {
     });
 });
 
+// Background toggle
+let matrixEnabled = true;
+
+document.getElementById('bgToggle')?.addEventListener('click', () => {
+    matrixEnabled = !matrixEnabled;
+    const matrixCanvas = document.getElementById('matrix-bg');
+    const body = document.body;
+    
+    if (matrixEnabled) {
+        // Matrix background
+        matrixCanvas.style.display = 'block';
+        body.style.background = '#000000';
+    } else {
+        // Stock exchange background
+        matrixCanvas.style.display = 'none';
+        body.style.background = 'linear-gradient(rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0.85)), url("https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=1920&q=80") center/cover fixed';
+    }
+    
+    // Save preference
+    localStorage.setItem('matrixEnabled', matrixEnabled);
+});
+
+// Load saved preference
+document.addEventListener('DOMContentLoaded', () => {
+    const saved = localStorage.getItem('matrixEnabled');
+    if (saved !== null) {
+        matrixEnabled = saved === 'true';
+        if (!matrixEnabled) {
+            document.getElementById('bgToggle')?.click();
+        }
+    }
+});
+
 // Initialize chart on page load
 document.addEventListener('DOMContentLoaded', () => {
     console.log('Initializing portfolio chart...');
