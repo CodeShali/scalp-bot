@@ -479,3 +479,4 @@ MIT License - see LICENSE file for details
 - [Risk Management](https://www.investopedia.com/articles/forex/06/fxrisk.asp)
 # Test auto-deploy
 # Test 2
+# Test 3
