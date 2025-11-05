@@ -912,64 +912,182 @@ document.getElementById('aboutPopup')?.addEventListener('click', (e) => {
 // Theme toggle (Dark/Light)
 let isDarkMode = true;
 
-document.getElementById('bgToggleSwitch')?.addEventListener('change', (e) => {
-    isDarkMode = e.target.checked;
+function applyTheme(darkMode) {
     const matrixCanvas = document.getElementById('matrix-bg');
     const body = document.body;
     const container = document.querySelector('.container');
     
-    if (isDarkMode) {
-        // Dark theme with matrix
+    if (darkMode) {
+        // ========== DARK THEME ==========
         matrixCanvas.style.display = 'block';
         body.style.background = '#000000';
         body.style.color = '#c0c0c0';
-        container.style.color = '#c0c0c0';
+        if (container) container.style.color = '#c0c0c0';
         
-        // Update all cards
+        // Cards
         document.querySelectorAll('.card').forEach(card => {
             card.style.background = '#0a0a0a';
             card.style.borderColor = '#e0e0e0';
             card.style.color = '#c0c0c0';
         });
         
-        // Update header
-        document.querySelector('.header').style.background = '#0a0a0a';
-        document.querySelector('.header').style.borderColor = '#e0e0e0';
+        // Card titles
+        document.querySelectorAll('.card-title').forEach(title => {
+            title.style.color = '#e0e0e0';
+            title.style.borderColor = '#e0e0e0';
+            title.style.textShadow = '0 0 8px rgba(0, 217, 255, 0.5)';
+        });
+        
+        // Header
+        const header = document.querySelector('.header');
+        if (header) {
+            header.style.background = '#0a0a0a';
+            header.style.borderColor = '#e0e0e0';
+        }
+        
+        const h1 = document.querySelector('.header h1');
+        if (h1) h1.style.color = '#ffffff';
+        
+        const subtitle = document.querySelector('.subtitle');
+        if (subtitle) subtitle.style.color = '#999999';
+        
+        // About button
+        const aboutBtn = document.getElementById('aboutBtn');
+        if (aboutBtn) {
+            aboutBtn.style.background = 'rgba(0, 217, 255, 0.1)';
+            aboutBtn.style.borderColor = '#00d9ff';
+            aboutBtn.style.color = '#00d9ff';
+        }
+        
+        // Control buttons - reset to default dark styles
+        document.querySelectorAll('.btn-control').forEach(btn => {
+            btn.style.background = 'transparent';
+            if (btn.classList.contains('btn-warning')) {
+                btn.style.borderColor = '#ffa500';
+                btn.style.color = '#ffa500';
+            } else if (btn.classList.contains('btn-success')) {
+                btn.style.borderColor = '#00ff41';
+                btn.style.color = '#00ff41';
+            } else if (btn.classList.contains('btn-danger')) {
+                btn.style.borderColor = '#ff0055';
+                btn.style.color = '#ff0055';
+            } else if (btn.classList.contains('btn-info')) {
+                btn.style.borderColor = '#00d9ff';
+                btn.style.color = '#00d9ff';
+            }
+        });
+        
+        // Chart buttons
+        document.querySelectorAll('.chart-btn').forEach(btn => {
+            if (btn.classList.contains('active')) {
+                btn.style.background = '#00d9ff';
+                btn.style.borderColor = '#00d9ff';
+                btn.style.color = '#000000';
+            } else {
+                btn.style.background = 'transparent';
+                btn.style.borderColor = '#666666';
+                btn.style.color = '#666666';
+            }
+        });
+        
+        // Stat labels and values
+        document.querySelectorAll('.stat-label').forEach(label => {
+            label.style.color = '#666666';
+        });
+        
+        document.querySelectorAll('.stat-value').forEach(value => {
+            if (!value.classList.contains('positive') && !value.classList.contains('negative')) {
+                value.style.color = '#ffffff';
+            }
+        });
+        
+        // Status badge
+        const statusBadge = document.getElementById('botStatus');
+        if (statusBadge) {
+            if (statusBadge.classList.contains('status-running')) {
+                statusBadge.style.background = 'rgba(0, 255, 65, 0.1)';
+                statusBadge.style.borderColor = '#00ff41';
+                statusBadge.style.color = '#00ff41';
+            } else if (statusBadge.classList.contains('status-stopped')) {
+                statusBadge.style.background = 'rgba(255, 0, 85, 0.1)';
+                statusBadge.style.borderColor = '#ff0055';
+                statusBadge.style.color = '#ff0055';
+            } else {
+                statusBadge.style.background = 'rgba(255, 165, 0, 0.1)';
+                statusBadge.style.borderColor = '#ffa500';
+                statusBadge.style.color = '#ffa500';
+            }
+        }
+        
+        // Empty states
+        document.querySelectorAll('.empty-state').forEach(el => {
+            el.style.color = '#666666';
+        });
+        
+        // Limit items
+        document.querySelectorAll('.limit-item span').forEach(span => {
+            if (!span.id) {
+                span.style.color = '#666666';
+            } else {
+                span.style.color = '#ffffff';
+            }
+        });
+        
+        // Watchlist tags
+        document.querySelectorAll('.ticker-tag').forEach(tag => {
+            tag.style.background = 'rgba(0, 217, 255, 0.1)';
+            tag.style.borderColor = '#00d9ff';
+            tag.style.color = '#00d9ff';
+        });
+        
+        // Tables
+        const table = document.querySelector('.trades-table');
+        if (table) {
+            table.style.color = '#c0c0c0';
+            document.querySelectorAll('.trades-table th').forEach(th => {
+                th.style.color = '#e0e0e0';
+                th.style.borderColor = 'rgba(0, 217, 255, 0.3)';
+            });
+            document.querySelectorAll('.trades-table td').forEach(td => {
+                td.style.color = '#c0c0c0';
+                td.style.borderColor = 'rgba(0, 217, 255, 0.15)';
+            });
+        }
+        
+        // Toggle switch labels
+        document.querySelectorAll('.toggle-switch').forEach(toggle => {
+            const parent = toggle.parentElement;
+            if (parent) {
+                parent.querySelectorAll('span').forEach(span => {
+                    if (!span.classList.contains('toggle-slider')) {
+                        span.style.color = '#999';
+                    }
+                });
+            }
+        });
         
     } else {
-        // Light theme - white background, black text
+        // ========== LIGHT THEME ==========
         matrixCanvas.style.display = 'none';
         body.style.background = '#ffffff';
         body.style.color = '#000000';
-        container.style.color = '#000000';
+        if (container) container.style.color = '#000000';
         
-        // Update all cards to light theme
+        // Cards
         document.querySelectorAll('.card').forEach(card => {
             card.style.background = '#f8f9fa';
             card.style.borderColor = '#dee2e6';
             card.style.color = '#000000';
         });
         
-        // Update card titles
+        // Card titles
         document.querySelectorAll('.card-title').forEach(title => {
             title.style.color = '#212529';
             title.style.borderColor = '#dee2e6';
             title.style.textShadow = 'none';
         });
         
-        // Update stat labels
-        document.querySelectorAll('.stat-label').forEach(label => {
-            label.style.color = '#6c757d';
-        });
-        
-        // Update stat values
-        document.querySelectorAll('.stat-value').forEach(value => {
-            if (!value.classList.contains('positive') && !value.classList.contains('negative')) {
-                value.style.color = '#212529';
-            }
-        });
-        
-        // Update header
+        // Header
         const header = document.querySelector('.header');
         if (header) {
             header.style.background = '#f8f9fa';
@@ -982,7 +1100,7 @@ document.getElementById('bgToggleSwitch')?.addEventListener('change', (e) => {
         const subtitle = document.querySelector('.subtitle');
         if (subtitle) subtitle.style.color = '#6c757d';
         
-        // Update About button
+        // About button
         const aboutBtn = document.getElementById('aboutBtn');
         if (aboutBtn) {
             aboutBtn.style.background = '#e9ecef';
@@ -990,7 +1108,7 @@ document.getElementById('bgToggleSwitch')?.addEventListener('change', (e) => {
             aboutBtn.style.color = '#212529';
         }
         
-        // Update control buttons
+        // Control buttons
         document.querySelectorAll('.btn-control').forEach(btn => {
             if (btn.classList.contains('btn-warning')) {
                 btn.style.background = '#ffc107';
@@ -1011,7 +1129,7 @@ document.getElementById('bgToggleSwitch')?.addEventListener('change', (e) => {
             }
         });
         
-        // Update chart buttons
+        // Chart buttons
         document.querySelectorAll('.chart-btn').forEach(btn => {
             if (btn.classList.contains('active')) {
                 btn.style.background = '#007bff';
@@ -1024,7 +1142,18 @@ document.getElementById('bgToggleSwitch')?.addEventListener('change', (e) => {
             }
         });
         
-        // Update status badge
+        // Stat labels and values
+        document.querySelectorAll('.stat-label').forEach(label => {
+            label.style.color = '#6c757d';
+        });
+        
+        document.querySelectorAll('.stat-value').forEach(value => {
+            if (!value.classList.contains('positive') && !value.classList.contains('negative')) {
+                value.style.color = '#212529';
+            }
+        });
+        
+        // Status badge
         const statusBadge = document.getElementById('botStatus');
         if (statusBadge) {
             if (statusBadge.classList.contains('status-running')) {
@@ -1035,15 +1164,19 @@ document.getElementById('bgToggleSwitch')?.addEventListener('change', (e) => {
                 statusBadge.style.background = '#f8d7da';
                 statusBadge.style.borderColor = '#dc3545';
                 statusBadge.style.color = '#721c24';
+            } else {
+                statusBadge.style.background = '#fff3cd';
+                statusBadge.style.borderColor = '#ffc107';
+                statusBadge.style.color = '#856404';
             }
         }
         
-        // Update empty states
+        // Empty states
         document.querySelectorAll('.empty-state').forEach(el => {
             el.style.color = '#6c757d';
         });
         
-        // Update limit items
+        // Limit items
         document.querySelectorAll('.limit-item span').forEach(span => {
             if (!span.id) {
                 span.style.color = '#6c757d';
@@ -1052,14 +1185,14 @@ document.getElementById('bgToggleSwitch')?.addEventListener('change', (e) => {
             }
         });
         
-        // Update watchlist tags
+        // Watchlist tags
         document.querySelectorAll('.ticker-tag').forEach(tag => {
             tag.style.background = '#e9ecef';
             tag.style.borderColor = '#6c757d';
             tag.style.color = '#212529';
         });
         
-        // Update table
+        // Tables
         const table = document.querySelector('.trades-table');
         if (table) {
             table.style.color = '#212529';
@@ -1068,12 +1201,28 @@ document.getElementById('bgToggleSwitch')?.addEventListener('change', (e) => {
                 th.style.borderColor = '#dee2e6';
             });
             document.querySelectorAll('.trades-table td').forEach(td => {
+                td.style.color = '#212529';
                 td.style.borderColor = '#dee2e6';
             });
         }
+        
+        // Toggle switch labels
+        document.querySelectorAll('.toggle-switch').forEach(toggle => {
+            const parent = toggle.parentElement;
+            if (parent) {
+                parent.querySelectorAll('span').forEach(span => {
+                    if (!span.classList.contains('toggle-slider')) {
+                        span.style.color = '#6c757d';
+                    }
+                });
+            }
+        });
     }
-    
-    // Save preference
+}
+
+document.getElementById('bgToggleSwitch')?.addEventListener('change', (e) => {
+    isDarkMode = e.target.checked;
+    applyTheme(isDarkMode);
     localStorage.setItem('isDarkMode', isDarkMode);
 });
 
@@ -1082,14 +1231,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const saved = localStorage.getItem('isDarkMode');
     if (saved !== null) {
         isDarkMode = saved === 'true';
-        const toggle = document.getElementById('bgToggleSwitch');
-        if (toggle) {
-            toggle.checked = isDarkMode;
-            if (!isDarkMode) {
-                toggle.dispatchEvent(new Event('change'));
-            }
-        }
     }
+    
+    const toggle = document.getElementById('bgToggleSwitch');
+    if (toggle) {
+        toggle.checked = isDarkMode;
+    }
+    
+    // Apply theme on page load
+    applyTheme(isDarkMode);
 });
 
 // Initialize chart on page load

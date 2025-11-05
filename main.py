@@ -58,7 +58,22 @@ class ScalpingBot:
         # Initialize ngrok management
         self.ngrok_process = None
         self.ngrok_url = None
-        self._ensure_ngrok_running()
+        
+        # Check if using custom domain without ngrok
+        use_ngrok = self.config.get('use_ngrok', True)
+        custom_url = self.config.get('custom_url', '')
+        
+        if custom_url:
+            # Use custom domain directly (no ngrok)
+            self.ngrok_url = custom_url
+            logger.info(f"✅ Using custom domain: {custom_url}")
+        elif use_ngrok:
+            # Use ngrok
+            self._ensure_ngrok_running()
+        else:
+            # No ngrok, use localhost
+            self.ngrok_url = "http://localhost:8001"
+            logger.info("Using localhost (no ngrok)")
         
         self.notifier = DiscordNotifier(self.config)
 
@@ -115,8 +130,20 @@ class ScalpingBot:
                 pass
             
             # Start ngrok with browser warning skip
+            # Check if custom domain is configured
+            ngrok_domain = self.config.get('ngrok_domain', '')
+            
+            if ngrok_domain:
+                # Use custom/static domain
+                cmd = ["ngrok", "http", "8001", "--domain", ngrok_domain, "--host-header", "rewrite"]
+                logger.info(f"Starting ngrok with static domain: {ngrok_domain}")
+            else:
+                # Use random domain
+                cmd = ["ngrok", "http", "8001", "--host-header", "rewrite"]
+                logger.info("Starting ngrok with random domain")
+            
             self.ngrok_process = subprocess.Popen(
-                ["ngrok", "http", "8001", "--host-header", "rewrite"],
+                cmd,
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
                 stdin=subprocess.DEVNULL,

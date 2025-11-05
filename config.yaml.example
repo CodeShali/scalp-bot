@@ -4,6 +4,17 @@ mode: paper
 # GitHub Webhook Secret for Auto-Deploy (generate with: python3 -c "import secrets; print(secrets.token_hex(32))")
 webhook_secret: "your-webhook-secret-token-here"
 
+# Ngrok Configuration
+use_ngrok: true  # Set to false if using custom domain with port forwarding
+
+# Option 1: Ngrok with static domain (get free domain at https://ngrok.com)
+# If not set, ngrok will use a random domain (changes on every restart)
+ngrok_domain: ""  # Example: your-bot-name.ngrok-free.app
+
+# Option 2: Custom domain without ngrok (requires port forwarding on router)
+# Set use_ngrok to false and specify your domain here
+custom_url: ""  # Example: https://webhook.yourdomain.com
+
 # Alpaca API Configuration
 alpaca:
   paper:
