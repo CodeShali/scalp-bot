@@ -1082,11 +1082,15 @@ def api_portfolio_history():
         current_equity = float(account.equity)
         
         # Calculate date range based on timeframe
+        # Alpaca rules: 
+        # - For periods <= 7 days: can use 1Min, 5Min, 15Min, 1H
+        # - For periods > 7 days and <= 30 days: must use 1H or 1D
+        # - For periods > 30 days: must use 1D
         now = datetime.now(pytz.timezone('US/Eastern'))
         timeframe_map = {
             '1D': {'days': 1, 'timeframe': '5Min'},
             '1W': {'days': 7, 'timeframe': '1H'},
-            '1M': {'days': 30, 'timeframe': '1D'},
+            '1M': {'days': 30, 'timeframe': '1D'},  # Must use 1D for 30 days
             '3M': {'days': 90, 'timeframe': '1D'},
             'ALL': {'days': 365, 'timeframe': '1D'}
         }
