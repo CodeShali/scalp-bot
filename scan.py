@@ -162,12 +162,9 @@ class TickerScanner:
             "news_volume": min(100.0, max(0.0, news_volume * 5)),  # Scale news count
         }
 
-        # Apply hard filters
-        min_volume = thresholds.get("min_premarket_volume")
-        if min_volume and premarket_volume < min_volume:
-            self.logger.debug("%s filtered out by min premarket volume %s", symbol, min_volume)
-            # Zero out score for filtered tickers
-            return {key: 0.0 for key in metrics}
+        # Log raw values for debugging
+        self.logger.debug("%s raw values: vol_ratio=%.2f, gap=%.2f%%, iv_rank=%.2f, oi=%d, atr=%.2f, sentiment=%.2f, news=%d",
+                         symbol, volume_ratio, gap_percent, iv_rank, option_open_interest, atr, news_sentiment, news_volume)
 
         return metrics
 
