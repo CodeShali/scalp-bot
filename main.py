@@ -1098,7 +1098,6 @@ def api_portfolio_history():
         data = []
         try:
             from alpaca.trading.requests import GetPortfolioHistoryRequest
-            from alpaca.trading.enums import PortfolioHistoryPeriod
             
             # Use the correct API parameters
             history = bot.broker.trading_client.get_portfolio_history(
