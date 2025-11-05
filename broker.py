@@ -42,7 +42,7 @@ class BrokerClient:
     def get_latest_bar(self, symbol: str) -> Dict[str, Any]:
         """Get the latest price bar for a symbol."""
         try:
-            bar = self.client.get_latest_bar(symbol)
+            bar = self.client.get_latest_bar(symbol, feed=self.data_feed)
             return bar._raw if hasattr(bar, '_raw') else bar.to_dict()
         except Exception as exc:
             self.logger.error("Failed to fetch latest bar for %s: %s", symbol, exc)
@@ -124,7 +124,7 @@ class BrokerClient:
     def get_current_price(self, symbol: str) -> float:
         """Get current market price for a symbol."""
         try:
-            quote = self.client.get_latest_quote(symbol)
+            quote = self.client.get_latest_quote(symbol, feed=self.data_feed)
             # Use mid-point of bid/ask for better accuracy
             ask = float(quote.ask_price) if quote.ask_price else 0
             bid = float(quote.bid_price) if quote.bid_price else 0
