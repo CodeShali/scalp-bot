@@ -1032,6 +1032,93 @@ def api_dashboard_url():
     })
 
 
+@app.route('/api/portfolio/history')
+def api_portfolio_history():
+    """Get portfolio value history from Alpaca."""
+    bot = ScalpingBot._instance
+    if not bot or not bot.broker:
+        return jsonify({'error': 'Bot not initialized'}), 503
+    
+    try:
+        from datetime import datetime, timedelta
+        import pytz
+        
+        # Get portfolio history from Alpaca
+        # Alpaca provides portfolio history via portfolio_history endpoint
+        timeframe = request.args.get('timeframe', '1D')
+        
+        # Map timeframe to Alpaca parameters
+        timeframe_map = {
+            '1D': {'period': '1D', 'timeframe': '5Min'},
+            '1W': {'period': '1W', 'timeframe': '1H'},
+            '1M': {'period': '1M', 'timeframe': '1D'},
+            '3M': {'period': '3M', 'timeframe': '1D'},
+            'ALL': {'period': '1A', 'timeframe': '1D'}
+        }
+        
+        params = timeframe_map.get(timeframe, timeframe_map['1D'])
+        
+        # Get account info for current value
+        account = bot.broker.trading_client.get_account()
+        current_equity = float(account.equity)
+        
+        # Get portfolio history
+        history = bot.broker.trading_client.get_portfolio_history(
+            period=params['period'],
+            timeframe=params['timeframe']
+        )
+        
+        # Format data for chart
+        data = []
+        if history.timestamp and history.equity:
+            for i, timestamp in enumerate(history.timestamp):
+                dt = datetime.fromtimestamp(timestamp, tz=pytz.UTC)
+                equity = history.equity[i]
+                
+                # Format time based on timeframe
+                if timeframe == '1D':
+                    time_str = dt.strftime('%H:%M')
+                elif timeframe in ['1W', '1M']:
+                    time_str = dt.strftime('%b %d')
+                else:
+                    time_str = dt.strftime('%b %y')
+                
+                data.append({
+                    'time': time_str,
+                    'value': float(equity) if equity else current_equity
+                })
+        
+        # If no data, return current value
+        if not data:
+            data = [{
+                'time': datetime.now().strftime('%H:%M'),
+                'value': current_equity
+            }]
+        
+        return jsonify({
+            'data': data,
+            'current_value': current_equity,
+            'timeframe': timeframe
+        })
+        
+    except Exception as e:
+        logger.error(f"Error fetching portfolio history: {e}")
+        # Return current account value as fallback
+        try:
+            account = bot.broker.trading_client.get_account()
+            current_equity = float(account.equity)
+            return jsonify({
+                'data': [{
+                    'time': datetime.now().strftime('%H:%M'),
+                    'value': current_equity
+                }],
+                'current_value': current_equity,
+                'timeframe': timeframe
+            })
+        except:
+            return jsonify({'error': str(e)}), 500
+
+
 @app.route('/api/watchlist')
 def api_get_watchlist():
     """Get current watchlist."""

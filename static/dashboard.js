@@ -17,18 +17,18 @@ function initPortfolioChart() {
         data: {
             labels: [],
             datasets: [{
-                label: 'Portfolio Value',
+                label: 'Portfolio',
                 data: [],
                 borderColor: '#00ff41',
-                backgroundColor: 'rgba(0, 255, 65, 0.1)',
-                borderWidth: 2,
+                backgroundColor: 'rgba(0, 255, 65, 0.05)',
+                borderWidth: 1.5,
                 fill: true,
-                tension: 0.4,
+                tension: 0.3,
                 pointRadius: 0,
-                pointHoverRadius: 6,
+                pointHoverRadius: 4,
                 pointHoverBackgroundColor: '#00ff41',
                 pointHoverBorderColor: '#000',
-                pointHoverBorderWidth: 2
+                pointHoverBorderWidth: 1
             }]
         },
         options: {
@@ -39,58 +39,45 @@ function initPortfolioChart() {
                 mode: 'index'
             },
             plugins: {
-                legend: {
-                    display: false
-                },
+                legend: { display: false },
                 tooltip: {
-                    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                    backgroundColor: 'rgba(0, 0, 0, 0.95)',
                     titleColor: '#00d9ff',
                     bodyColor: '#ffffff',
                     borderColor: '#00d9ff',
                     borderWidth: 1,
-                    padding: 12,
+                    padding: 8,
                     displayColors: false,
+                    titleFont: { family: 'JetBrains Mono', size: 11 },
+                    bodyFont: { family: 'JetBrains Mono', size: 11 },
                     callbacks: {
-                        title: function(context) {
-                            return context[0].label;
-                        },
-                        label: function(context) {
-                            return 'Value: ' + formatCurrency(context.parsed.y);
-                        }
+                        title: (ctx) => ctx[0].label,
+                        label: (ctx) => formatCurrency(ctx.parsed.y)
                     }
                 }
             },
             scales: {
                 x: {
-                    grid: {
-                        color: 'rgba(0, 217, 255, 0.1)',
-                        drawBorder: false
-                    },
+                    grid: { display: false, drawBorder: false },
                     ticks: {
                         color: '#666666',
-                        font: {
-                            family: 'JetBrains Mono',
-                            size: 10
-                        },
-                        maxRotation: 0
+                        font: { family: 'JetBrains Mono', size: 9 },
+                        maxRotation: 0,
+                        maxTicksLimit: 8
                     }
                 },
                 y: {
-                    grid: {
-                        color: 'rgba(0, 217, 255, 0.1)',
-                        drawBorder: false
-                    },
+                    grid: { color: 'rgba(0, 217, 255, 0.05)', drawBorder: false },
                     ticks: {
                         color: '#666666',
-                        font: {
-                            family: 'JetBrains Mono',
-                            size: 10
-                        },
-                        callback: function(value) {
-                            return '$' + value.toLocaleString();
-                        }
+                        font: { family: 'JetBrains Mono', size: 9 },
+                        maxTicksLimit: 5,
+                        callback: (val) => '$' + (val/1000).toFixed(0) + 'k'
                     }
                 }
+            },
+            layout: {
+                padding: { left: 0, right: 0, top: 5, bottom: 0 }
             }
         }
     });
@@ -124,72 +111,26 @@ function updatePortfolioChart(data) {
     }
 }
 
-function generateMockPortfolioData() {
-    // Generate mock data for demonstration
-    const now = new Date();
-    const baseValue = 100000;
-    
-    // 1D - every 5 minutes for today
-    portfolioData['1D'] = [];
-    for (let i = 0; i < 78; i++) { // 6.5 hours * 12 (5-min intervals)
-        const time = new Date(now.getTime() - (78 - i) * 5 * 60 * 1000);
-        const variance = (Math.random() - 0.5) * 1000;
-        const trend = i * 20; // Slight upward trend
-        portfolioData['1D'].push({
-            time: time.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
-            value: baseValue + trend + variance
-        });
+async function loadPortfolioData(timeframe) {
+    try {
+        const response = await fetch(`/api/portfolio/history?timeframe=${timeframe}`);
+        const result = await response.json();
+        
+        if (result.error) {
+            console.error('Error loading portfolio data:', result.error);
+            return;
+        }
+        
+        // Store data
+        portfolioData[timeframe] = result.data || [];
+        
+        // Update chart if this is the current timeframe
+        if (timeframe === currentRange) {
+            updatePortfolioChart();
+        }
+    } catch (error) {
+        console.error('Failed to load portfolio data:', error);
     }
-    
-    // 1W - every hour for 7 days
-    portfolioData['1W'] = [];
-    for (let i = 0; i < 168; i++) {
-        const time = new Date(now.getTime() - (168 - i) * 60 * 60 * 1000);
-        const variance = (Math.random() - 0.5) * 2000;
-        const trend = i * 30;
-        portfolioData['1W'].push({
-            time: time.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit' }),
-            value: baseValue + trend + variance
-        });
-    }
-    
-    // 1M - daily for 30 days
-    portfolioData['1M'] = [];
-    for (let i = 0; i < 30; i++) {
-        const time = new Date(now.getTime() - (30 - i) * 24 * 60 * 60 * 1000);
-        const variance = (Math.random() - 0.5) * 3000;
-        const trend = i * 100;
-        portfolioData['1M'].push({
-            time: time.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-            value: baseValue + trend + variance
-        });
-    }
-    
-    // 3M - every 3 days for 90 days
-    portfolioData['3M'] = [];
-    for (let i = 0; i < 30; i++) {
-        const time = new Date(now.getTime() - (90 - i * 3) * 24 * 60 * 60 * 1000);
-        const variance = (Math.random() - 0.5) * 5000;
-        const trend = i * 200;
-        portfolioData['3M'].push({
-            time: time.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-            value: baseValue + trend + variance
-        });
-    }
-    
-    // ALL - weekly for 1 year
-    portfolioData['ALL'] = [];
-    for (let i = 0; i < 52; i++) {
-        const time = new Date(now.getTime() - (52 - i) * 7 * 24 * 60 * 60 * 1000);
-        const variance = (Math.random() - 0.5) * 8000;
-        const trend = i * 300;
-        portfolioData['ALL'].push({
-            time: time.toLocaleDateString('en-US', { month: 'short', year: '2-digit' }),
-            value: baseValue + trend + variance
-        });
-    }
-    
-    updatePortfolioChart();
 }
 
 // Helper functions
@@ -911,14 +852,22 @@ document.querySelectorAll('.chart-btn').forEach(btn => {
         // Add active class to clicked button
         this.classList.add('active');
         // Update current range
-        currentRange = this.dataset.range;
-        // Update chart
-        updatePortfolioChart();
+        const newRange = this.dataset.range;
+        currentRange = newRange;
+        // Load data for this timeframe if not already loaded
+        if (!portfolioData[newRange] || portfolioData[newRange].length === 0) {
+            loadPortfolioData(newRange);
+        } else {
+            updatePortfolioChart();
+        }
     });
 });
 
 // Initialize chart on page load
 document.addEventListener('DOMContentLoaded', () => {
     initPortfolioChart();
-    generateMockPortfolioData();
+    // Load initial data
+    loadPortfolioData('1D');
+    // Refresh every 30 seconds
+    setInterval(() => loadPortfolioData(currentRange), 30000);
 });
