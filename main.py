@@ -13,14 +13,12 @@ from typing import Any, Dict, Optional, List
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from apscheduler.schedulers.background import BackgroundScheduler
-from apscheduler.triggers.cron import CronTrigger
 from flask import Flask, render_template, jsonify, request
 import pandas as pd
 
 from broker import BrokerClient
 from monitor import PositionMonitor
 from notifications import DiscordNotifier
-from scan import TickerScanner
 from signals import SignalDetector
 from utils import (
     EASTERN_TZ,
@@ -79,7 +77,6 @@ class ScalpingBot:
         self.notifier = DiscordNotifier(self.config)
 
         self.broker = BrokerClient(self.config)
-        self.scanner = TickerScanner(self.broker, self.notifier, self.config)
         self.signal_detector = SignalDetector(self.broker, self.notifier, self.config)
         self.monitor = PositionMonitor(self.broker, self.notifier, self.signal_detector, self.config)
 
@@ -220,34 +217,18 @@ class ScalpingBot:
         self.notifier = DiscordNotifier(self.config)
         
         # Update notifier references in all components
-        self.scanner.notifier = self.notifier
         self.signal_detector.notifier = self.notifier
         self.monitor.notifier = self.notifier
         
         # Send startup notification with dashboard link
         if self.notifier.is_configured():
-            # Get next scan time
-            scanning_cfg = self.config.get("scanning", {})
-            run_time = scanning_cfg.get("run_time", "08:30")
-            next_scan = f"Tomorrow at {run_time} ET" if datetime.now(EASTERN_TZ).hour > 8 else f"Today at {run_time} ET"
-            
             self.notifier.alert_startup(
                 mode=self.config.get("mode", "paper"),
-                next_scan_time=next_scan
+                next_scan_time="Continuous monitoring of watchlist"
             )
 
     def _register_jobs(self) -> None:
-        scanning_cfg = self.config.get("scanning", {})
-        run_time = scanning_cfg.get("run_time", "08:30")
-        hour, minute = map(int, run_time.split(":"))
-
-        self.scheduler.add_job(
-            self._run_premarket_scan,
-            CronTrigger(hour=hour, minute=minute, timezone=EASTERN_TZ),
-            name="pre-market-scan",
-            max_instances=1,
-        )
-
+        # Register signal evaluation job (every 15 seconds during market hours)
         signal_interval = self.config.get("signals", {}).get("poll_interval_seconds", 15)
         self.scheduler.add_job(
             self._poll_for_signals,
@@ -289,23 +270,6 @@ class ScalpingBot:
         signal.signal(signal.SIGTERM, _handle_signal)
 
     # -------------------- Scheduled Tasks --------------------
-    def _run_premarket_scan(self) -> None:
-        """Run the pre-market scan with error tracking."""
-        if self.circuit_open:
-            logger.warning("Circuit breaker open; skipping pre-market scan")
-            return
-        
-        try:
-            logger.info("Starting pre-market scan")
-            result = self.scanner.run()
-            if result:
-                logger.info("Scan completed: selected %s with score %.2f", 
-                           result['symbol'], result['score'])
-        except Exception as exc:  # noqa: BLE001
-            logger.exception("Pre-market scan failed: %s", exc)
-            self.notifier.alert_error("pre-market scan", exc)
-            self._record_error("scan")
-
     def _is_market_hours(self) -> bool:
         """Check if current time is during market hours (Mon-Fri 9:30 AM - 4:00 PM ET)."""
         now = datetime.now(EASTERN_TZ)
@@ -454,21 +418,17 @@ class ScalpingBot:
         try:
             state = read_state()
             
-            # Get active tickers from state
-            active_tickers = state.get("active_tickers", [])
+            # Get ALL watchlist tickers (not just top 3 from scan)
+            watchlist_symbols = self.config.get('watchlist', {}).get('symbols', [])
             
-            # If no active tickers, check if we have a ticker_of_the_day
-            if not active_tickers:
-                ticker = state.get("ticker_of_the_day")
-                if ticker:
-                    active_tickers = [{"symbol": ticker, "rank": 1}]
-                    logger.info(f"📌 Using ticker_of_the_day: {ticker}")
-            
-            if not active_tickers:
-                logger.info("⚠️ No active tickers to evaluate")
+            if not watchlist_symbols:
+                logger.warning("⚠️ No tickers in watchlist - add tickers to config.yaml")
                 return
-
-            logger.info(f"📋 Active tickers: {[t['symbol'] for t in active_tickers]}")
+            
+            # Create ticker list with rank based on position in watchlist
+            active_tickers = [{"symbol": symbol, "rank": i+1} for i, symbol in enumerate(watchlist_symbols)]
+            
+            logger.info(f"📋 Checking ALL {len(active_tickers)} watchlist tickers: {watchlist_symbols}")
             
             open_position = state.get("open_position")
             if open_position:
