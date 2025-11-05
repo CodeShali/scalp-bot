@@ -92,7 +92,7 @@ function updatePortfolioChart(data) {
     // Update chart
     portfolioChart.data.labels = chartData.map(d => d.time);
     portfolioChart.data.datasets[0].data = chartData.map(d => d.value);
-    portfolioChart.update('none');
+    portfolioChart.update();
     
     // Update stats
     if (chartData.length > 0) {
@@ -106,13 +106,12 @@ function updatePortfolioChart(data) {
         document.getElementById('chartDailyPnl').className = 'stat-value ' + (change >= 0 ? 'positive' : 'negative');
         document.getElementById('chartTotalReturn').textContent = formatPercent(changePercent);
         document.getElementById('chartTotalReturn').className = 'stat-value ' + (changePercent >= 0 ? 'positive' : 'negative');
-        document.getElementById('portfolioChange').textContent = formatPercent(changePercent);
-        document.getElementById('portfolioChange').style.color = changePercent >= 0 ? '#00ff41' : '#ff0055';
     }
 }
 
 async function loadPortfolioData(timeframe) {
     try {
+        console.log(`Loading portfolio data for ${timeframe}...`);
         const response = await fetch(`/api/portfolio/history?timeframe=${timeframe}`);
         const result = await response.json();
         
@@ -121,11 +120,14 @@ async function loadPortfolioData(timeframe) {
             return;
         }
         
+        console.log(`Loaded ${result.data?.length || 0} data points for ${timeframe}`);
+        
         // Store data
         portfolioData[timeframe] = result.data || [];
         
         // Update chart if this is the current timeframe
         if (timeframe === currentRange) {
+            console.log('Updating chart...');
             updatePortfolioChart();
         }
     } catch (error) {
@@ -865,7 +867,9 @@ document.querySelectorAll('.chart-btn').forEach(btn => {
 
 // Initialize chart on page load
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('Initializing portfolio chart...');
     initPortfolioChart();
+    console.log('Chart initialized, loading data...');
     // Load initial data
     loadPortfolioData('1D');
     // Refresh every 30 seconds
