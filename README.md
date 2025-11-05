@@ -478,3 +478,4 @@ MIT License - see LICENSE file for details
 - [Technical Analysis](https://www.investopedia.com/terms/t/technicalanalysis.asp)
 - [Risk Management](https://www.investopedia.com/articles/forex/06/fxrisk.asp)
 # Test auto-deploy
+# Test 2
