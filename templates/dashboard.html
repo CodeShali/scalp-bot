@@ -164,14 +164,16 @@
             
             <div class="card">
                 <div class="card-title">🎯 ACTIVE TICKERS</div>
-                <div id="tickerInfo">
-                    <div class="empty-state">AWAITING PRE-MARKET SCAN...</div>
+                <div style="max-height: 200px; overflow-y: auto;">
+                    <div id="tickerInfo">
+                        <div class="empty-state">AWAITING PRE-MARKET SCAN...</div>
+                    </div>
+                    <div id="activeTickersList" style="margin-top: 15px;"></div>
                 </div>
-                <div id="activeTickersList" style="margin-top: 15px;"></div>
             </div>
             <div class="card">
                 <div class="card-title">ACTIVE POSITION</div>
-                <div id="positionInfo" class="empty-state">NO POSITION DETECTED</div>
+                <div id="positionInfo" class="empty-state" style="max-height: 200px; overflow-y: auto;">NO POSITION DETECTED</div>
             </div>
         </div>
 
@@ -182,7 +184,7 @@
                 <input type="text" id="newTicker" placeholder="Enter ticker (e.g., SPY)" maxlength="5" class="ticker-input">
                 <button id="addTickerBtn" class="btn btn-success">ADD TICKER</button>
             </div>
-            <div id="watchlistContainer" class="watchlist-tags">
+            <div id="watchlistContainer" class="watchlist-tags" style="max-height: 150px; overflow-y: auto;">
                 <div class="empty-state">Loading watchlist...</div>
             </div>
         </div>
@@ -190,7 +192,7 @@
         <!-- Today's Trades -->
         <div class="card" style="margin-bottom: 25px;">
             <div class="card-title">TODAY'S TRADES</div>
-            <div style="overflow-x: auto;">
+            <div style="max-height: 300px; overflow-y: auto; overflow-x: auto;">
                 <table class="trades-table" id="tradesTable">
                     <thead>
                         <tr>
