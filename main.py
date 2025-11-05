@@ -4,6 +4,9 @@ import signal
 import sys
 import threading
 import time
+import hmac
+import hashlib
+import subprocess
 from collections import deque
 from datetime import datetime, timedelta
 from typing import Any, Dict, Optional
@@ -1315,6 +1318,121 @@ def api_update_settings():
     except Exception as exc:
         logger.error("Failed to update settings: %s", exc)
         return jsonify({'error': 'Failed to save settings'}), 500
+
+
+@app.route('/webhook', methods=['POST'])
+def github_webhook():
+    """Handle GitHub webhook for auto-deploy."""
+    try:
+        bot = ScalpingBot._instance
+        if not bot:
+            return jsonify({'error': 'Bot not initialized'}), 503
+        
+        # Get secret from config
+        secret = bot.config.get('webhook_secret', '')
+        
+        if not secret:
+            logger.warning("Webhook secret not configured in config.yaml")
+            return jsonify({'error': 'Webhook not configured'}), 500
+        
+        # Verify signature
+        signature = request.headers.get('X-Hub-Signature-256')
+        if signature:
+            hash_object = hmac.new(
+                secret.encode('utf-8'),
+                msg=request.data,
+                digestmod=hashlib.sha256
+            )
+            expected_signature = "sha256=" + hash_object.hexdigest()
+            
+            if not hmac.compare_digest(expected_signature, signature):
+                logger.warning("Invalid webhook signature")
+                return jsonify({'error': 'Invalid signature'}), 403
+        
+        # Get event type
+        event = request.headers.get('X-GitHub-Event', 'ping')
+        
+        if event == 'ping':
+            logger.info("✅ Received ping from GitHub webhook")
+            return jsonify({'message': 'Pong!'}), 200
+        
+        if event == 'push':
+            payload = request.json
+            ref = payload.get('ref', '')
+            commits = payload.get('commits', [])
+            pusher = payload.get('pusher', {}).get('name', 'unknown')
+            
+            logger.info(f"📦 Push event received from {pusher}")
+            logger.info(f"   Ref: {ref}")
+            logger.info(f"   Commits: {len(commits)}")
+            
+            # Only deploy on push to main
+            if ref == 'refs/heads/main':
+                logger.info("🚀 Push to main detected - starting auto-deploy")
+                
+                # Send Discord notification
+                bot.notifier.send(f"🔄 **Auto-Deploy Started**\nPushed by: {pusher}\nCommits: {len(commits)}")
+                
+                # Run git pull and restart in background
+                def deploy():
+                    try:
+                        # Git pull
+                        result = subprocess.run(
+                            ['git', 'pull', 'origin', 'main'],
+                            cwd=os.path.dirname(os.path.abspath(__file__)),
+                            capture_output=True,
+                            text=True,
+                            timeout=30
+                        )
+                        
+                        if result.returncode == 0:
+                            logger.info(f"✅ Git pull successful: {result.stdout}")
+                            bot.notifier.send(f"✅ **Code Updated**\n```\n{result.stdout}\n```")
+                            
+                            # Restart service
+                            logger.info("🔄 Restarting service...")
+                            subprocess.run(
+                                ['sudo', 'systemctl', 'restart', 'scalp-bot'],
+                                timeout=30
+                            )
+                            logger.info("✅ Service restart initiated")
+                            bot.notifier.send("🎉 **Auto-Deploy Complete**\nBot is restarting with new code!")
+                        else:
+                            logger.error(f"❌ Git pull failed: {result.stderr}")
+                            bot.notifier.send(f"❌ **Deploy Failed**\n```\n{result.stderr}\n```")
+                    except Exception as e:
+                        logger.error(f"❌ Deploy error: {e}")
+                        bot.notifier.send(f"❌ **Deploy Error**\n```\n{str(e)}\n```")
+                
+                # Run in background thread
+                threading.Thread(target=deploy, daemon=True).start()
+                
+                return jsonify({
+                    'message': 'Deploy started',
+                    'commits': len(commits),
+                    'pusher': pusher
+                }), 200
+            else:
+                logger.info(f"⏭️  Ignoring push to {ref} (not main branch)")
+                return jsonify({'message': 'Ignored - not main branch'}), 200
+        
+        return jsonify({'message': 'Event received'}), 200
+        
+    except Exception as e:
+        logger.error(f"❌ Webhook error: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/webhook/health', methods=['GET'])
+def webhook_health():
+    """Health check for webhook."""
+    bot = ScalpingBot._instance
+    return jsonify({
+        'status': 'healthy',
+        'service': 'scalp-bot',
+        'webhook': 'enabled',
+        'ngrok_url': bot.ngrok_url if bot else None
+    }), 200
 
 
 def main() -> None:

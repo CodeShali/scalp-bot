@@ -1,6 +1,9 @@
 # Trading mode: paper or live
 mode: paper
 
+# GitHub Webhook Secret for Auto-Deploy (generate with: python3 -c "import secrets; print(secrets.token_hex(32))")
+webhook_secret: "your-webhook-secret-token-here"
+
 # Alpaca API Configuration
 alpaca:
   paper:
