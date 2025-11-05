@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chart Test</title>
+    <style>
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            background: #000;
+            color: #fff;
+            padding: 20px;
+        }
+        .test-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: #0a0a0a;
+            border: 2px solid #e0e0e0;
+            padding: 20px;
+        }
+        .test-result {
+            padding: 10px;
+            margin: 10px 0;
+            border-left: 4px solid;
+        }
+        .pass { border-color: #00ff41; background: rgba(0, 255, 65, 0.1); }
+        .fail { border-color: #ff0055; background: rgba(255, 0, 85, 0.1); }
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin: 20px 0;
+            background: #0a0a0a;
+            border: 1px solid #333;
+            padding: 10px;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            background: transparent;
+            border: 2px solid #00d9ff;
+            color: #00d9ff;
+            cursor: pointer;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        button:hover {
+            background: #00d9ff;
+            color: #000;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .stat-box {
+            background: #0a0a0a;
+            border: 1px solid #333;
+            padding: 15px;
+        }
+        .stat-label {
+            color: #666;
+            font-size: 11px;
+            margin-bottom: 5px;
+        }
+        .stat-value {
+            color: #e0e0e0;
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    <div class="test-container">
+        <h1>📊 Portfolio Chart Validation Test</h1>
+        
+        <div id="testResults"></div>
+        
+        <h2>Test Chart</h2>
+        <div class="stats">
+            <div class="stat-box">
+                <div class="stat-label">Value</div>
+                <div class="stat-value" id="testValue">$0.00</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Change</div>
+                <div class="stat-value" id="testChange">$0.00</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Return</div>
+                <div class="stat-value" id="testReturn">0.00%</div>
+            </div>
+        </div>
+        
+        <div class="chart-container">
+            <canvas id="testChart"></canvas>
+        </div>
+        
+        <div>
+            <button onclick="testChart('1D')">Test 1D</button>
+            <button onclick="testChart('1W')">Test 1W</button>
+            <button onclick="testChart('1M')">Test 1M</button>
+            <button onclick="runAllTests()">Run All Tests</button>
+        </div>
+    </div>
+
+    <script>
+        let testChartInstance = null;
+        let testResults = [];
+
+        function addTestResult(name, passed, message) {
+            const result = { name, passed, message };
+            testResults.push(result);
+            
+            const div = document.createElement('div');
+            div.className = `test-result ${passed ? 'pass' : 'fail'}`;
+            div.innerHTML = `
+                <strong>${passed ? '✅' : '❌'} ${name}</strong><br>
+                ${message}
+            `;
+            document.getElementById('testResults').appendChild(div);
+            
+            console.log(`${passed ? 'PASS' : 'FAIL'}: ${name} - ${message}`);
+        }
+
+        function runAllTests() {
+            document.getElementById('testResults').innerHTML = '<h2>Running Tests...</h2>';
+            testResults = [];
+            
+            // Test 1: Chart.js loaded
+            if (typeof Chart !== 'undefined') {
+                addTestResult('Chart.js Library', true, 'Chart.js v' + Chart.version + ' loaded successfully');
+            } else {
+                addTestResult('Chart.js Library', false, 'Chart.js not loaded!');
+                return;
+            }
+            
+            // Test 2: Canvas element exists
+            const canvas = document.getElementById('testChart');
+            if (canvas) {
+                addTestResult('Canvas Element', true, 'Canvas element found in DOM');
+            } else {
+                addTestResult('Canvas Element', false, 'Canvas element not found!');
+                return;
+            }
+            
+            // Test 3: Create chart
+            try {
+                if (testChartInstance) {
+                    testChartInstance.destroy();
+                }
+                
+                testChartInstance = new Chart(canvas.getContext('2d'), {
+                    type: 'line',
+                    data: {
+                        labels: ['9:30', '10:00', '10:30', '11:00', '11:30', '12:00'],
+                        datasets: [{
+                            label: 'Test Data',
+                            data: [100000, 100500, 100300, 101000, 100800, 101500],
+                            borderColor: '#e0e0e0',
+                            backgroundColor: 'rgba(224, 224, 224, 0.15)',
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            x: {
+                                grid: { color: 'rgba(224, 224, 224, 0.1)' },
+                                ticks: { color: '#999999' }
+                            },
+                            y: {
+                                grid: { color: 'rgba(224, 224, 224, 0.15)' },
+                                ticks: { 
+                                    color: '#999999',
+                                    callback: (val) => '$' + (val/1000).toFixed(1) + 'k'
+                                }
+                            }
+                        }
+                    }
+                });
+                
+                addTestResult('Chart Creation', true, 'Chart created successfully with test data');
+                
+                // Update stats
+                document.getElementById('testValue').textContent = '$101,500.00';
+                document.getElementById('testChange').textContent = '$1,500.00';
+                document.getElementById('testChange').style.color = '#00ff41';
+                document.getElementById('testReturn').textContent = '+1.50%';
+                document.getElementById('testReturn').style.color = '#00ff41';
+                
+            } catch (error) {
+                addTestResult('Chart Creation', false, 'Error: ' + error.message);
+                return;
+            }
+            
+            // Test 4: Chart is visible
+            setTimeout(() => {
+                const chartArea = testChartInstance.chartArea;
+                if (chartArea && chartArea.width > 0 && chartArea.height > 0) {
+                    addTestResult('Chart Visibility', true, `Chart rendered: ${chartArea.width}x${chartArea.height}px`);
+                } else {
+                    addTestResult('Chart Visibility', false, 'Chart has no dimensions');
+                }
+                
+                // Test 5: Data points
+                const dataLength = testChartInstance.data.datasets[0].data.length;
+                if (dataLength > 0) {
+                    addTestResult('Data Points', true, `${dataLength} data points loaded`);
+                } else {
+                    addTestResult('Data Points', false, 'No data points');
+                }
+                
+                // Test 6: API endpoint
+                testAPIEndpoint();
+                
+            }, 500);
+        }
+
+        async function testAPIEndpoint() {
+            try {
+                const response = await fetch('/api/portfolio/history?timeframe=1D');
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    if (data.error) {
+                        addTestResult('API Endpoint', false, 'API returned error: ' + data.error);
+                    } else if (data.data && data.data.length > 0) {
+                        addTestResult('API Endpoint', true, `API returned ${data.data.length} data points`);
+                        addTestResult('API Data Format', true, `Sample: time="${data.data[0].time}", value=${data.data[0].value}`);
+                    } else {
+                        addTestResult('API Endpoint', false, 'API returned no data');
+                    }
+                } else {
+                    addTestResult('API Endpoint', false, `HTTP ${response.status}: ${response.statusText}`);
+                }
+            } catch (error) {
+                addTestResult('API Endpoint', false, 'Fetch error: ' + error.message);
+            }
+            
+            // Summary
+            setTimeout(() => {
+                const passed = testResults.filter(r => r.passed).length;
+                const total = testResults.length;
+                const summary = document.createElement('div');
+                summary.className = `test-result ${passed === total ? 'pass' : 'fail'}`;
+                summary.innerHTML = `<h2>Summary: ${passed}/${total} tests passed</h2>`;
+                document.getElementById('testResults').appendChild(summary);
+            }, 500);
+        }
+
+        function testChart(timeframe) {
+            console.log(`Testing ${timeframe} chart...`);
+            // Generate mock data based on timeframe
+            let labels, data;
+            
+            if (timeframe === '1D') {
+                labels = ['9:30', '10:00', '10:30', '11:00', '11:30', '12:00', '12:30', '13:00'];
+                data = [100000, 100500, 100300, 101000, 100800, 101500, 101200, 101800];
+            } else if (timeframe === '1W') {
+                labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
+                data = [100000, 100800, 101200, 100900, 102000];
+            } else {
+                labels = ['Week 1', 'Week 2', 'Week 3', 'Week 4'];
+                data = [100000, 101500, 102000, 103000];
+            }
+            
+            if (testChartInstance) {
+                testChartInstance.data.labels = labels;
+                testChartInstance.data.datasets[0].data = data;
+                testChartInstance.update();
+                
+                const currentValue = data[data.length - 1];
+                const startValue = data[0];
+                const change = currentValue - startValue;
+                const changePercent = (change / startValue) * 100;
+                
+                document.getElementById('testValue').textContent = '$' + currentValue.toLocaleString();
+                document.getElementById('testChange').textContent = '$' + change.toLocaleString();
+                document.getElementById('testChange').style.color = change >= 0 ? '#00ff41' : '#ff0055';
+                document.getElementById('testReturn').textContent = (change >= 0 ? '+' : '') + changePercent.toFixed(2) + '%';
+                document.getElementById('testReturn').style.color = change >= 0 ? '#00ff41' : '#ff0055';
+                
+                console.log(`${timeframe} chart updated successfully`);
+            }
+        }
+
+        // Auto-run tests on load
+        window.addEventListener('load', () => {
+            setTimeout(runAllTests, 500);
+        });
+    </script>
+</body>
+</html>
