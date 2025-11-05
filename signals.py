@@ -4,6 +4,7 @@ from typing import Any, Dict, Optional
 
 import numpy as np
 import pandas as pd
+import pytz
 
 from broker import BrokerClient
 from notifications import DiscordNotifier
@@ -96,7 +97,7 @@ class SignalDetector:
     # -------------------- Helpers --------------------
     def _get_recent_bars(self, symbol: str) -> Optional[list]:
         lookback_minutes = self.signals_cfg.get("lookback_minutes", 120)
-        end = datetime.utcnow()
+        end = datetime.now(pytz.UTC)
         start = end - timedelta(minutes=lookback_minutes)
         try:
             bars = self.broker.get_historical_bars(
