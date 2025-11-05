@@ -894,22 +894,37 @@ document.querySelectorAll('.chart-btn').forEach(btn => {
     });
 });
 
-// Background toggle
+// About popup
+document.getElementById('aboutIcon')?.addEventListener('click', () => {
+    document.getElementById('aboutPopup').style.display = 'flex';
+});
+
+document.getElementById('closeAbout')?.addEventListener('click', () => {
+    document.getElementById('aboutPopup').style.display = 'none';
+});
+
+document.getElementById('aboutPopup')?.addEventListener('click', (e) => {
+    if (e.target.id === 'aboutPopup') {
+        document.getElementById('aboutPopup').style.display = 'none';
+    }
+});
+
+// Background toggle with new switch
 let matrixEnabled = true;
 
-document.getElementById('bgToggle')?.addEventListener('click', () => {
-    matrixEnabled = !matrixEnabled;
+document.getElementById('bgToggleSwitch')?.addEventListener('change', (e) => {
+    matrixEnabled = e.target.checked;
     const matrixCanvas = document.getElementById('matrix-bg');
     const body = document.body;
     
     if (matrixEnabled) {
-        // Matrix background
+        // Matrix background (dark)
         matrixCanvas.style.display = 'block';
         body.style.background = '#000000';
     } else {
-        // Stock exchange background
+        // Professional light background
         matrixCanvas.style.display = 'none';
-        body.style.background = 'linear-gradient(rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0.85)), url("https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=1920&q=80") center/cover fixed';
+        body.style.background = 'linear-gradient(135deg, #1a1f2e 0%, #2d3748 50%, #1a1f2e 100%)';
     }
     
     // Save preference
@@ -921,8 +936,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const saved = localStorage.getItem('matrixEnabled');
     if (saved !== null) {
         matrixEnabled = saved === 'true';
-        if (!matrixEnabled) {
-            document.getElementById('bgToggle')?.click();
+        const toggle = document.getElementById('bgToggleSwitch');
+        if (toggle) {
+            toggle.checked = matrixEnabled;
+            if (!matrixEnabled) {
+                toggle.dispatchEvent(new Event('change'));
+            }
         }
     }
 });
