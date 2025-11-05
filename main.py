@@ -1062,38 +1062,71 @@ def api_portfolio_history():
         account = bot.broker.trading_client.get_account()
         current_equity = float(account.equity)
         
-        # Get portfolio history
-        history = bot.broker.trading_client.get_portfolio_history(
-            period=params['period'],
-            timeframe=params['timeframe']
-        )
-        
-        # Format data for chart
+        # Try to get portfolio history from Alpaca
         data = []
-        if history.timestamp and history.equity:
-            for i, timestamp in enumerate(history.timestamp):
-                dt = datetime.fromtimestamp(timestamp, tz=pytz.UTC)
-                equity = history.equity[i]
-                
-                # Format time based on timeframe
-                if timeframe == '1D':
-                    time_str = dt.strftime('%H:%M')
-                elif timeframe in ['1W', '1M']:
-                    time_str = dt.strftime('%b %d')
-                else:
-                    time_str = dt.strftime('%b %y')
-                
-                data.append({
-                    'time': time_str,
-                    'value': float(equity) if equity else current_equity
-                })
+        try:
+            history = bot.broker.trading_client.get_portfolio_history(
+                period=params['period'],
+                timeframe=params['timeframe']
+            )
+            
+            # Format data for chart
+            if history.timestamp and history.equity and len(history.timestamp) > 1:
+                for i, timestamp in enumerate(history.timestamp):
+                    dt = datetime.fromtimestamp(timestamp, tz=pytz.UTC)
+                    equity = history.equity[i]
+                    
+                    # Format time based on timeframe
+                    if timeframe == '1D':
+                        time_str = dt.strftime('%H:%M')
+                    elif timeframe in ['1W', '1M']:
+                        time_str = dt.strftime('%b %d')
+                    else:
+                        time_str = dt.strftime('%b %y')
+                    
+                    data.append({
+                        'time': time_str,
+                        'value': float(equity) if equity else current_equity
+                    })
+        except Exception as e:
+            logger.warning(f"Could not fetch portfolio history: {e}")
         
-        # If no data, return current value
-        if not data:
-            data = [{
-                'time': datetime.now().strftime('%H:%M'),
-                'value': current_equity
-            }]
+        # If insufficient data, create simple 2-point chart showing current value
+        if len(data) < 2:
+            logger.info(f"Portfolio history unavailable, showing current value only")
+            # Show current value as flat line (start of period to now)
+            now = datetime.now(pytz.timezone('US/Eastern'))
+            
+            if timeframe == '1D':
+                start_time = now.replace(hour=9, minute=30, second=0)
+                data = [
+                    {'time': start_time.strftime('%H:%M'), 'value': current_equity},
+                    {'time': now.strftime('%H:%M'), 'value': current_equity}
+                ]
+            elif timeframe == '1W':
+                start_time = now - timedelta(days=7)
+                data = [
+                    {'time': start_time.strftime('%b %d'), 'value': current_equity},
+                    {'time': now.strftime('%b %d'), 'value': current_equity}
+                ]
+            elif timeframe == '1M':
+                start_time = now - timedelta(days=30)
+                data = [
+                    {'time': start_time.strftime('%b %d'), 'value': current_equity},
+                    {'time': now.strftime('%b %d'), 'value': current_equity}
+                ]
+            elif timeframe == '3M':
+                start_time = now - timedelta(days=90)
+                data = [
+                    {'time': start_time.strftime('%b %d'), 'value': current_equity},
+                    {'time': now.strftime('%b %d'), 'value': current_equity}
+                ]
+            else:  # ALL
+                start_time = now - timedelta(days=365)
+                data = [
+                    {'time': start_time.strftime('%b %y'), 'value': current_equity},
+                    {'time': now.strftime('%b %y'), 'value': current_equity}
+                ]
         
         return jsonify({
             'data': data,
