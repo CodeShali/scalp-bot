@@ -10,25 +10,30 @@ let portfolioData = {
 let currentRange = '1D';
 
 function initPortfolioChart() {
-    const ctx = document.getElementById('portfolioChart').getContext('2d');
+    const ctx = document.getElementById('portfolioChart');
+    if (!ctx) {
+        console.error('Chart canvas not found!');
+        return;
+    }
     
-    portfolioChart = new Chart(ctx, {
+    console.log('Creating chart...');
+    portfolioChart = new Chart(ctx.getContext('2d'), {
         type: 'line',
         data: {
             labels: [],
             datasets: [{
-                label: 'Portfolio',
+                label: 'Portfolio Value',
                 data: [],
-                borderColor: '#00ff41',
-                backgroundColor: 'rgba(0, 255, 65, 0.05)',
-                borderWidth: 1.5,
+                borderColor: '#e0e0e0',
+                backgroundColor: 'rgba(224, 224, 224, 0.15)',
+                borderWidth: 2,
                 fill: true,
-                tension: 0.3,
+                tension: 0.4,
                 pointRadius: 0,
-                pointHoverRadius: 4,
-                pointHoverBackgroundColor: '#00ff41',
-                pointHoverBorderColor: '#000',
-                pointHoverBorderWidth: 1
+                pointHoverRadius: 5,
+                pointHoverBackgroundColor: '#ffffff',
+                pointHoverBorderColor: '#e0e0e0',
+                pointHoverBorderWidth: 2
             }]
         },
         options: {
@@ -41,15 +46,16 @@ function initPortfolioChart() {
             plugins: {
                 legend: { display: false },
                 tooltip: {
-                    backgroundColor: 'rgba(0, 0, 0, 0.95)',
-                    titleColor: '#00d9ff',
+                    enabled: true,
+                    backgroundColor: 'rgba(10, 10, 10, 0.95)',
+                    titleColor: '#e0e0e0',
                     bodyColor: '#ffffff',
-                    borderColor: '#00d9ff',
+                    borderColor: '#e0e0e0',
                     borderWidth: 1,
-                    padding: 8,
+                    padding: 10,
                     displayColors: false,
-                    titleFont: { family: 'JetBrains Mono', size: 11 },
-                    bodyFont: { family: 'JetBrains Mono', size: 11 },
+                    titleFont: { family: 'JetBrains Mono', size: 12, weight: 'bold' },
+                    bodyFont: { family: 'JetBrains Mono', size: 12 },
                     callbacks: {
                         title: (ctx) => ctx[0].label,
                         label: (ctx) => formatCurrency(ctx.parsed.y)
@@ -58,41 +64,62 @@ function initPortfolioChart() {
             },
             scales: {
                 x: {
-                    grid: { display: false, drawBorder: false },
+                    grid: { 
+                        display: true,
+                        color: 'rgba(224, 224, 224, 0.1)',
+                        drawBorder: false 
+                    },
                     ticks: {
-                        color: '#666666',
-                        font: { family: 'JetBrains Mono', size: 9 },
+                        color: '#999999',
+                        font: { family: 'JetBrains Mono', size: 10 },
                         maxRotation: 0,
                         maxTicksLimit: 8
                     }
                 },
                 y: {
-                    grid: { color: 'rgba(0, 217, 255, 0.05)', drawBorder: false },
+                    grid: { 
+                        display: true,
+                        color: 'rgba(224, 224, 224, 0.15)',
+                        drawBorder: false 
+                    },
                     ticks: {
-                        color: '#666666',
-                        font: { family: 'JetBrains Mono', size: 9 },
-                        maxTicksLimit: 5,
-                        callback: (val) => '$' + (val/1000).toFixed(0) + 'k'
+                        color: '#999999',
+                        font: { family: 'JetBrains Mono', size: 10 },
+                        maxTicksLimit: 6,
+                        callback: (val) => '$' + (val/1000).toFixed(1) + 'k'
                     }
                 }
             },
             layout: {
-                padding: { left: 0, right: 0, top: 5, bottom: 0 }
+                padding: { left: 5, right: 5, top: 10, bottom: 5 }
             }
         }
     });
+    console.log('Chart created successfully!');
 }
 
 function updatePortfolioChart(data) {
-    if (!portfolioChart) return;
+    if (!portfolioChart) {
+        console.error('Chart not initialized!');
+        return;
+    }
     
     const range = currentRange;
     let chartData = portfolioData[range] || [];
+    
+    console.log(`Updating chart with ${chartData.length} data points for ${range}`);
+    
+    if (chartData.length === 0) {
+        console.warn('No data to display');
+        return;
+    }
     
     // Update chart
     portfolioChart.data.labels = chartData.map(d => d.time);
     portfolioChart.data.datasets[0].data = chartData.map(d => d.value);
     portfolioChart.update();
+    
+    console.log('Chart updated successfully');
     
     // Update stats
     if (chartData.length > 0) {
@@ -100,6 +127,8 @@ function updatePortfolioChart(data) {
         const startValue = chartData[0].value;
         const change = currentValue - startValue;
         const changePercent = (change / startValue) * 100;
+        
+        console.log(`Stats: Value=${currentValue}, Change=${change}, Return=${changePercent}%`);
         
         document.getElementById('chartPortfolioValue').textContent = formatCurrency(currentValue);
         document.getElementById('chartDailyPnl').textContent = formatCurrency(change);
