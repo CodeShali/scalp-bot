@@ -960,18 +960,18 @@ function applyTheme(darkMode) {
         }
         
         // Control buttons - reset to default dark styles
-        document.querySelectorAll('.btn-control').forEach(btn => {
+        document.querySelectorAll('.btn-control, .btn-modern').forEach(btn => {
             btn.style.background = 'transparent';
-            if (btn.classList.contains('btn-warning')) {
+            if (btn.classList.contains('btn-warning') || btn.classList.contains('btn-modern-warning')) {
                 btn.style.borderColor = '#ffa500';
                 btn.style.color = '#ffa500';
-            } else if (btn.classList.contains('btn-success')) {
+            } else if (btn.classList.contains('btn-success') || btn.classList.contains('btn-modern-success')) {
                 btn.style.borderColor = '#00ff41';
                 btn.style.color = '#00ff41';
-            } else if (btn.classList.contains('btn-danger')) {
+            } else if (btn.classList.contains('btn-danger') || btn.classList.contains('btn-modern-danger')) {
                 btn.style.borderColor = '#ff0055';
                 btn.style.color = '#ff0055';
-            } else if (btn.classList.contains('btn-info')) {
+            } else if (btn.classList.contains('btn-info') || btn.classList.contains('btn-modern-info')) {
                 btn.style.borderColor = '#00d9ff';
                 btn.style.color = '#00d9ff';
             }
@@ -1111,21 +1111,21 @@ function applyTheme(darkMode) {
             aboutBtn.style.color = '#252423';
         }
         
-        // Control buttons
-        document.querySelectorAll('.btn-control').forEach(btn => {
-            if (btn.classList.contains('btn-warning')) {
+        // Control buttons - modern and old style
+        document.querySelectorAll('.btn-control, .btn-modern').forEach(btn => {
+            if (btn.classList.contains('btn-warning') || btn.classList.contains('btn-modern-warning')) {
                 btn.style.background = '#ffc107';
                 btn.style.borderColor = '#ffc107';
                 btn.style.color = '#000000';
-            } else if (btn.classList.contains('btn-success')) {
+            } else if (btn.classList.contains('btn-success') || btn.classList.contains('btn-modern-success')) {
                 btn.style.background = '#28a745';
                 btn.style.borderColor = '#28a745';
                 btn.style.color = '#ffffff';
-            } else if (btn.classList.contains('btn-danger')) {
+            } else if (btn.classList.contains('btn-danger') || btn.classList.contains('btn-modern-danger')) {
                 btn.style.background = '#dc3545';
                 btn.style.borderColor = '#dc3545';
                 btn.style.color = '#ffffff';
-            } else if (btn.classList.contains('btn-info')) {
+            } else if (btn.classList.contains('btn-info') || btn.classList.contains('btn-modern-info')) {
                 btn.style.background = '#17a2b8';
                 btn.style.borderColor = '#17a2b8';
                 btn.style.color = '#ffffff';
