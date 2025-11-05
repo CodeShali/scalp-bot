@@ -954,6 +954,7 @@ document.getElementById('bgToggleSwitch')?.addEventListener('change', (e) => {
         document.querySelectorAll('.card-title').forEach(title => {
             title.style.color = '#212529';
             title.style.borderColor = '#dee2e6';
+            title.style.textShadow = 'none';
         });
         
         // Update stat labels
@@ -969,10 +970,107 @@ document.getElementById('bgToggleSwitch')?.addEventListener('change', (e) => {
         });
         
         // Update header
-        document.querySelector('.header').style.background = '#f8f9fa';
-        document.querySelector('.header').style.borderColor = '#dee2e6';
-        document.querySelector('.header h1').style.color = '#212529';
-        document.querySelector('.subtitle').style.color = '#6c757d';
+        const header = document.querySelector('.header');
+        if (header) {
+            header.style.background = '#f8f9fa';
+            header.style.borderColor = '#dee2e6';
+        }
+        
+        const h1 = document.querySelector('.header h1');
+        if (h1) h1.style.color = '#212529';
+        
+        const subtitle = document.querySelector('.subtitle');
+        if (subtitle) subtitle.style.color = '#6c757d';
+        
+        // Update About button
+        const aboutBtn = document.getElementById('aboutBtn');
+        if (aboutBtn) {
+            aboutBtn.style.background = '#e9ecef';
+            aboutBtn.style.borderColor = '#495057';
+            aboutBtn.style.color = '#212529';
+        }
+        
+        // Update control buttons
+        document.querySelectorAll('.btn-control').forEach(btn => {
+            if (btn.classList.contains('btn-warning')) {
+                btn.style.background = '#ffc107';
+                btn.style.borderColor = '#ffc107';
+                btn.style.color = '#000000';
+            } else if (btn.classList.contains('btn-success')) {
+                btn.style.background = '#28a745';
+                btn.style.borderColor = '#28a745';
+                btn.style.color = '#ffffff';
+            } else if (btn.classList.contains('btn-danger')) {
+                btn.style.background = '#dc3545';
+                btn.style.borderColor = '#dc3545';
+                btn.style.color = '#ffffff';
+            } else if (btn.classList.contains('btn-info')) {
+                btn.style.background = '#17a2b8';
+                btn.style.borderColor = '#17a2b8';
+                btn.style.color = '#ffffff';
+            }
+        });
+        
+        // Update chart buttons
+        document.querySelectorAll('.chart-btn').forEach(btn => {
+            if (btn.classList.contains('active')) {
+                btn.style.background = '#007bff';
+                btn.style.borderColor = '#007bff';
+                btn.style.color = '#ffffff';
+            } else {
+                btn.style.background = 'transparent';
+                btn.style.borderColor = '#6c757d';
+                btn.style.color = '#495057';
+            }
+        });
+        
+        // Update status badge
+        const statusBadge = document.getElementById('botStatus');
+        if (statusBadge) {
+            if (statusBadge.classList.contains('status-running')) {
+                statusBadge.style.background = '#d4edda';
+                statusBadge.style.borderColor = '#28a745';
+                statusBadge.style.color = '#155724';
+            } else if (statusBadge.classList.contains('status-stopped')) {
+                statusBadge.style.background = '#f8d7da';
+                statusBadge.style.borderColor = '#dc3545';
+                statusBadge.style.color = '#721c24';
+            }
+        }
+        
+        // Update empty states
+        document.querySelectorAll('.empty-state').forEach(el => {
+            el.style.color = '#6c757d';
+        });
+        
+        // Update limit items
+        document.querySelectorAll('.limit-item span').forEach(span => {
+            if (!span.id) {
+                span.style.color = '#6c757d';
+            } else {
+                span.style.color = '#212529';
+            }
+        });
+        
+        // Update watchlist tags
+        document.querySelectorAll('.ticker-tag').forEach(tag => {
+            tag.style.background = '#e9ecef';
+            tag.style.borderColor = '#6c757d';
+            tag.style.color = '#212529';
+        });
+        
+        // Update table
+        const table = document.querySelector('.trades-table');
+        if (table) {
+            table.style.color = '#212529';
+            document.querySelectorAll('.trades-table th').forEach(th => {
+                th.style.color = '#495057';
+                th.style.borderColor = '#dee2e6';
+            });
+            document.querySelectorAll('.trades-table td').forEach(td => {
+                td.style.borderColor = '#dee2e6';
+            });
+        }
     }
     
     // Save preference
