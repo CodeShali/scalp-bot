@@ -51,9 +51,25 @@ body {
 .chart-btn { padding: 8px 16px; border: 1px solid #666666; background: transparent; color: #666666; cursor: pointer; transition: all 0.2s; font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 600; letter-spacing: 1px; }
 .chart-btn:hover { border-color: #00d9ff; color: #00d9ff; box-shadow: 0 0 10px rgba(0, 217, 255, 0.3); }
 .chart-btn.active { background: #00d9ff; color: #000000; border-color: #00d9ff; box-shadow: 0 0 15px rgba(0, 217, 255, 0.5); }
-/* About Icon & Popup */
-.about-icon { display: inline-block; margin-left: 10px; cursor: help; transition: transform 0.2s; }
-.about-icon:hover { transform: scale(1.2); }
+/* About Button & Popup */
+.about-btn { 
+    margin-top: 8px; 
+    padding: 6px 12px; 
+    background: rgba(0, 217, 255, 0.1); 
+    border: 1px solid #00d9ff; 
+    color: #00d9ff; 
+    font-size: 11px; 
+    font-weight: 600; 
+    cursor: pointer; 
+    transition: all 0.2s; 
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0.5px;
+}
+.about-btn:hover { 
+    background: #00d9ff; 
+    color: #000; 
+    box-shadow: 0 0 10px rgba(0, 217, 255, 0.5); 
+}
 .about-popup { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.8); z-index: 1000; display: flex; align-items: center; justify-content: center; }
 .about-popup-content { background: #0a0a0a; border: 2px solid #00d9ff; padding: 25px; max-width: 700px; width: 90%; box-shadow: 0 0 30px rgba(0, 217, 255, 0.5); }
 .close-popup:hover { color: #ff0055; }

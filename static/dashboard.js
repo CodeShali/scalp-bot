@@ -895,7 +895,7 @@ document.querySelectorAll('.chart-btn').forEach(btn => {
 });
 
 // About popup
-document.getElementById('aboutIcon')?.addEventListener('click', () => {
+document.getElementById('aboutBtn')?.addEventListener('click', () => {
     document.getElementById('aboutPopup').style.display = 'flex';
 });
 
