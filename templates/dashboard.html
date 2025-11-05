@@ -14,10 +14,25 @@
         <!-- Header -->
         <div class="header">
             <div class="header-left">
-                <h1>🤖 TARA</h1>
-                <div class="subtitle">TRADING ASSISTANT & RISK ANALYZER</div>
+                <img src="/static/tara-logo.png" alt="TARA" style="height: 50px; margin-right: 15px; vertical-align: middle;">
+                <div style="display: inline-block; vertical-align: middle;">
+                    <h1 style="margin: 0;">TARA</h1>
+                    <div class="subtitle">0DTE Options Scalping Bot</div>
+                </div>
             </div>
             <span id="botStatus" class="status-badge loading">INITIALIZING...</span>
+        </div>
+        
+        <!-- About -->
+        <div class="card" style="margin-bottom: 25px; background: linear-gradient(135deg, rgba(0, 217, 255, 0.05), rgba(0, 255, 65, 0.05));">
+            <div class="card-title">ℹ️ ABOUT TARA</div>
+            <p style="color: #999; line-height: 1.6; margin: 0;">
+                <strong style="color: #00d9ff;">TARA</strong> is an automated options scalping bot that trades 0DTE (zero days to expiration) and 1DTE options. 
+                Every morning at <strong style="color: #00ff41;">9:30 AM EST</strong>, it scans your watchlist, analyzes pre-market volume, gap percentages, 
+                IV rank, news sentiment, and option activity to select the top 3 tickers. It then monitors these stocks throughout the day, 
+                executing quick scalp trades with <strong style="color: #00ff41;">15% profit targets</strong> and <strong style="color: #ff0055;">7% stop losses</strong>. 
+                All trades are managed automatically with strict risk controls.
+            </p>
         </div>
         
         <!-- Portfolio Chart -->
