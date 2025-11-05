@@ -1,3 +1,197 @@
+// Portfolio Chart
+let portfolioChart = null;
+let portfolioData = {
+    '1D': [],
+    '1W': [],
+    '1M': [],
+    '3M': [],
+    'ALL': []
+};
+let currentRange = '1D';
+
+function initPortfolioChart() {
+    const ctx = document.getElementById('portfolioChart').getContext('2d');
+    
+    portfolioChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'Portfolio Value',
+                data: [],
+                borderColor: '#00ff41',
+                backgroundColor: 'rgba(0, 255, 65, 0.1)',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.4,
+                pointRadius: 0,
+                pointHoverRadius: 6,
+                pointHoverBackgroundColor: '#00ff41',
+                pointHoverBorderColor: '#000',
+                pointHoverBorderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+                intersect: false,
+                mode: 'index'
+            },
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                    titleColor: '#00d9ff',
+                    bodyColor: '#ffffff',
+                    borderColor: '#00d9ff',
+                    borderWidth: 1,
+                    padding: 12,
+                    displayColors: false,
+                    callbacks: {
+                        title: function(context) {
+                            return context[0].label;
+                        },
+                        label: function(context) {
+                            return 'Value: ' + formatCurrency(context.parsed.y);
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: {
+                        color: 'rgba(0, 217, 255, 0.1)',
+                        drawBorder: false
+                    },
+                    ticks: {
+                        color: '#666666',
+                        font: {
+                            family: 'JetBrains Mono',
+                            size: 10
+                        },
+                        maxRotation: 0
+                    }
+                },
+                y: {
+                    grid: {
+                        color: 'rgba(0, 217, 255, 0.1)',
+                        drawBorder: false
+                    },
+                    ticks: {
+                        color: '#666666',
+                        font: {
+                            family: 'JetBrains Mono',
+                            size: 10
+                        },
+                        callback: function(value) {
+                            return '$' + value.toLocaleString();
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+function updatePortfolioChart(data) {
+    if (!portfolioChart) return;
+    
+    const range = currentRange;
+    let chartData = portfolioData[range] || [];
+    
+    // Update chart
+    portfolioChart.data.labels = chartData.map(d => d.time);
+    portfolioChart.data.datasets[0].data = chartData.map(d => d.value);
+    portfolioChart.update('none');
+    
+    // Update stats
+    if (chartData.length > 0) {
+        const currentValue = chartData[chartData.length - 1].value;
+        const startValue = chartData[0].value;
+        const change = currentValue - startValue;
+        const changePercent = (change / startValue) * 100;
+        
+        document.getElementById('chartPortfolioValue').textContent = formatCurrency(currentValue);
+        document.getElementById('chartDailyPnl').textContent = formatCurrency(change);
+        document.getElementById('chartDailyPnl').className = 'stat-value ' + (change >= 0 ? 'positive' : 'negative');
+        document.getElementById('chartTotalReturn').textContent = formatPercent(changePercent);
+        document.getElementById('chartTotalReturn').className = 'stat-value ' + (changePercent >= 0 ? 'positive' : 'negative');
+        document.getElementById('portfolioChange').textContent = formatPercent(changePercent);
+        document.getElementById('portfolioChange').style.color = changePercent >= 0 ? '#00ff41' : '#ff0055';
+    }
+}
+
+function generateMockPortfolioData() {
+    // Generate mock data for demonstration
+    const now = new Date();
+    const baseValue = 100000;
+    
+    // 1D - every 5 minutes for today
+    portfolioData['1D'] = [];
+    for (let i = 0; i < 78; i++) { // 6.5 hours * 12 (5-min intervals)
+        const time = new Date(now.getTime() - (78 - i) * 5 * 60 * 1000);
+        const variance = (Math.random() - 0.5) * 1000;
+        const trend = i * 20; // Slight upward trend
+        portfolioData['1D'].push({
+            time: time.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+            value: baseValue + trend + variance
+        });
+    }
+    
+    // 1W - every hour for 7 days
+    portfolioData['1W'] = [];
+    for (let i = 0; i < 168; i++) {
+        const time = new Date(now.getTime() - (168 - i) * 60 * 60 * 1000);
+        const variance = (Math.random() - 0.5) * 2000;
+        const trend = i * 30;
+        portfolioData['1W'].push({
+            time: time.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit' }),
+            value: baseValue + trend + variance
+        });
+    }
+    
+    // 1M - daily for 30 days
+    portfolioData['1M'] = [];
+    for (let i = 0; i < 30; i++) {
+        const time = new Date(now.getTime() - (30 - i) * 24 * 60 * 60 * 1000);
+        const variance = (Math.random() - 0.5) * 3000;
+        const trend = i * 100;
+        portfolioData['1M'].push({
+            time: time.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+            value: baseValue + trend + variance
+        });
+    }
+    
+    // 3M - every 3 days for 90 days
+    portfolioData['3M'] = [];
+    for (let i = 0; i < 30; i++) {
+        const time = new Date(now.getTime() - (90 - i * 3) * 24 * 60 * 60 * 1000);
+        const variance = (Math.random() - 0.5) * 5000;
+        const trend = i * 200;
+        portfolioData['3M'].push({
+            time: time.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+            value: baseValue + trend + variance
+        });
+    }
+    
+    // ALL - weekly for 1 year
+    portfolioData['ALL'] = [];
+    for (let i = 0; i < 52; i++) {
+        const time = new Date(now.getTime() - (52 - i) * 7 * 24 * 60 * 60 * 1000);
+        const variance = (Math.random() - 0.5) * 8000;
+        const trend = i * 300;
+        portfolioData['ALL'].push({
+            time: time.toLocaleDateString('en-US', { month: 'short', year: '2-digit' }),
+            value: baseValue + trend + variance
+        });
+    }
+    
+    updatePortfolioChart();
+}
+
 // Helper functions
 function formatCurrency(value) {
     if (value === undefined || value === null) return '$0.00';
@@ -708,3 +902,23 @@ function generateSelectionReasoning(symbol, metrics, score) {
     
     return reasons.join('<br><br>');
 }
+
+// Chart range button handlers
+document.querySelectorAll('.chart-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        // Remove active class from all buttons
+        document.querySelectorAll('.chart-btn').forEach(b => b.classList.remove('active'));
+        // Add active class to clicked button
+        this.classList.add('active');
+        // Update current range
+        currentRange = this.dataset.range;
+        // Update chart
+        updatePortfolioChart();
+    });
+});
+
+// Initialize chart on page load
+document.addEventListener('DOMContentLoaded', () => {
+    initPortfolioChart();
+    generateMockPortfolioData();
+});
