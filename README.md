@@ -477,3 +477,4 @@ MIT License - see LICENSE file for details
 - [Options Trading Basics](https://www.investopedia.com/options-basics-tutorial-4583012)
 - [Technical Analysis](https://www.investopedia.com/terms/t/technicalanalysis.asp)
 - [Risk Management](https://www.investopedia.com/articles/forex/06/fxrisk.asp)
+# Test auto-deploy
