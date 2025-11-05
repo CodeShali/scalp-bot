@@ -146,45 +146,69 @@ class BrokerClient:
         """Fetch option chain for underlying symbol."""
         try:
             from alpaca.trading.requests import GetOptionContractsRequest
-            from datetime import datetime, timedelta
+            from datetime import datetime, timedelta, date
             
             # Get 0DTE and 1DTE options
             if expiration:
-                exp_date = datetime.fromisoformat(expiration).date()
+                # Handle both string and date formats
+                if isinstance(expiration, str):
+                    try:
+                        exp_date = datetime.strptime(expiration, '%Y-%m-%d').date()
+                    except ValueError:
+                        exp_date = datetime.fromisoformat(expiration).date()
+                else:
+                    exp_date = expiration if isinstance(expiration, date) else expiration.date()
+                
                 request = GetOptionContractsRequest(
                     underlying_symbols=[symbol],
                     status='active',
-                    expiration_date=exp_date,
+                    expiration_date=exp_date.strftime('%Y-%m-%d'),
                     limit=200
                 )
             else:
                 # Get nearest expirations (next 5 days to catch weekly options)
+                today = datetime.now().date()
+                end_date = (datetime.now() + timedelta(days=5)).date()
+                
                 request = GetOptionContractsRequest(
                     underlying_symbols=[symbol],
                     status='active',
-                    expiration_date_gte=datetime.now().date(),
-                    expiration_date_lte=(datetime.now() + timedelta(days=5)).date(),
+                    expiration_date_gte=today.strftime('%Y-%m-%d'),
+                    expiration_date_lte=end_date.strftime('%Y-%m-%d'),
                     limit=200
                 )
             
+            self.logger.debug("Fetching options for %s with request: %s", symbol, request)
             response = self.trading_client.get_option_contracts(request)
+            
+            if not response or not hasattr(response, 'option_contracts'):
+                self.logger.warning("No option contracts in response for %s", symbol)
+                return []
+            
             contracts = response.option_contracts
+            self.logger.debug("Found %d option contracts for %s", len(contracts), symbol)
             
             # Convert to dict format
             chain = []
             for contract in contracts:
-                chain.append({
-                    'symbol': contract.symbol,
-                    'strike_price': float(contract.strike_price),
-                    'option_type': contract.type,
-                    'expiration_date': str(contract.expiration_date),
-                    'open_interest': contract.open_interest if contract.open_interest else 0,
-                    'size': contract.size,
-                })
+                try:
+                    chain.append({
+                        'symbol': str(contract.symbol) if hasattr(contract, 'symbol') else '',
+                        'strike_price': float(contract.strike_price) if hasattr(contract, 'strike_price') else 0.0,
+                        'option_type': str(contract.type) if hasattr(contract, 'type') else '',
+                        'expiration_date': str(contract.expiration_date) if hasattr(contract, 'expiration_date') else '',
+                        'open_interest': int(contract.open_interest) if hasattr(contract, 'open_interest') and contract.open_interest else 0,
+                        'size': int(contract.size) if hasattr(contract, 'size') else 100,
+                    })
+                except Exception as e:
+                    self.logger.warning("Error parsing contract for %s: %s", symbol, e)
+                    continue
             
             return chain
         except Exception as exc:
-            self.logger.warning("Failed to fetch option chain for %s: %s", symbol, exc)
+            self.logger.error("Failed to fetch option chain for %s: %s (type: %s)", symbol, exc, type(exc).__name__)
+            import traceback
+            self.logger.debug("Traceback: %s", traceback.format_exc())
             return []
 
     def get_option_quote(self, option_symbol: str) -> Optional[Dict[str, Any]]:

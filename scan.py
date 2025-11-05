@@ -56,6 +56,7 @@ class TickerScanner:
         thresholds = scanning_cfg.get("thresholds", {})
 
         self.logger.info("Starting pre-market scan for symbols: %s", watchlist)
+        self.logger.info("Scoring weights: %s (sum=%.2f)", weights, sum(weights.values()))
 
         scored_tickers: List[Tuple[str, float, Dict[str, float]]] = []
         now_eastern = datetime.now(EASTERN_TZ)
@@ -65,7 +66,11 @@ class TickerScanner:
                 metrics = self._compute_metrics(symbol, now_eastern, thresholds)
                 score = weighted_score(metrics, weights)
                 scored_tickers.append((symbol, score, metrics))
-                self.logger.debug("%s metrics=%s score=%.4f", symbol, metrics, score)
+                
+                # Log at INFO level to help debug scoring
+                self.logger.info("%s - Score: %.2f | Metrics: %s", 
+                               symbol, score, 
+                               {k: f"{v:.2f}" for k, v in metrics.items()})
             except Exception as exc:  # noqa: BLE001
                 self.logger.exception("Failed to evaluate metrics for %s: %s", symbol, exc)
 

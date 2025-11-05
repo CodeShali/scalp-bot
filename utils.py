@@ -189,9 +189,21 @@ def rolling_iv_rank(iv_values: List[float], current_iv: float) -> Optional[float
 
 def weighted_score(metrics: Dict[str, float], weights: Dict[str, float]) -> float:
     """Compute weighted score given metrics and weight mapping."""
+    import logging
+    logger = logging.getLogger(__name__)
+    
     score = 0.0
+    contributions = {}
+    
     for key, weight in weights.items():
-        score += metrics.get(key, 0.0) * weight
+        metric_value = metrics.get(key, 0.0)
+        contribution = metric_value * weight
+        contributions[key] = contribution
+        score += contribution
+    
+    # Log individual contributions for debugging
+    logger.debug("Score calculation: total=%.2f, contributions=%s", score, contributions)
+    
     return score
 
 

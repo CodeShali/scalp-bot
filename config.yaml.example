@@ -30,7 +30,8 @@ watchlist:
 
 # Pre-Market Scanning Configuration
 scanning:
-  run_time: "08:30"  # ET time for daily scan
+  run_time: "09:30"  # ET time for daily scan (market open)
+  timezone: "US/Eastern"  # Your local timezone (US/Eastern, US/Central, US/Pacific, etc.)
   max_active_tickers: 3  # Monitor top N tickers (1-5 recommended)
   weights:
     premarket_volume: 0.25
