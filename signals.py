@@ -85,7 +85,7 @@ class SignalDetector:
         }
 
         self.logger.info(f"🚨 SIGNAL DETECTED for {symbol}: {direction.upper()} at ${latest['close']:.2f}")
-        self.notifier.alert_signal(symbol, direction, reason)
+        # Note: Notification will be sent when trade is actually executed
         return signal
 
     def has_reversal(self, symbol: str, entry_direction: str) -> bool:

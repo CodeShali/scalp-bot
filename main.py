@@ -820,6 +820,9 @@ def api_status():
     except Exception:
         pass
     
+    # Get watchlist symbols
+    watchlist_symbols = bot.config.get('watchlist', {}).get('symbols', [])
+    
     return jsonify({
         'bot': {
             'running': True,
@@ -831,6 +834,7 @@ def api_status():
         'position': position,
         'ticker_of_day': ticker_info,
         'active_tickers': active_tickers,
+        'watchlist': watchlist_symbols,
         'today_trades': today_trades,
         'config': {
             'watchlist': bot.config.get('watchlist', {}),
