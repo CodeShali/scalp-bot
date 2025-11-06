@@ -516,8 +516,8 @@ document.addEventListener('DOMContentLoaded', () => {
     
     loadWatchlist();
     updateDashboard();
-    setInterval(updateDashboard, 10000); // Refresh every 10 seconds (reduced for ngrok free tier)
-    setInterval(loadWatchlist, 60000); // Refresh watchlist every 60 seconds
+    setInterval(updateDashboard, 30000); // Refresh every 30 seconds (ngrok free tier: 40 req/min limit)
+    setInterval(loadWatchlist, 120000); // Refresh watchlist every 2 minutes
 });
 
 // Update news panel
