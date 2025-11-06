@@ -15,6 +15,10 @@ ngrok_domain: ""  # Example: your-bot-name.ngrok-free.app
 # Set use_ngrok to false and specify your domain here
 custom_url: ""  # Example: https://webhook.yourdomain.com
 
+# OpenAI API Configuration (for news analysis)
+openai:
+  api_key: ""  # Get from https://platform.openai.com/api-keys (optional, for AI news analysis)
+
 # Alpaca API Configuration
 alpaca:
   paper:

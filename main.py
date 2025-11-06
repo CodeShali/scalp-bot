@@ -18,6 +18,7 @@ import pandas as pd
 
 from broker import BrokerClient
 from monitor import PositionMonitor
+from news_analyzer import NewsAnalyzer
 from notifications import DiscordNotifier
 from signals import SignalDetector
 from utils import (
@@ -79,8 +80,13 @@ class ScalpingBot:
         self.broker = BrokerClient(self.config)
         self.signal_detector = SignalDetector(self.broker, self.notifier, self.config)
         self.monitor = PositionMonitor(self.broker, self.notifier, self.signal_detector, self.config)
+        self.news_analyzer = NewsAnalyzer(self.config)
 
         self.scheduler = BackgroundScheduler(timezone=EASTERN_TZ)
+        
+        # News cache
+        self.news_cache = []
+        self.news_last_updated = None
         
         # Circuit breaker for error tracking
         self.error_window = deque(maxlen=10)  # Track last 10 errors
@@ -246,6 +252,16 @@ class ScalpingBot:
             seconds=monitor_interval,
             next_run_time=datetime.now(EASTERN_TZ),
             name="position-monitor",
+            max_instances=1,
+        )
+        
+        # News analysis job (every hour)
+        self.scheduler.add_job(
+            self._update_news,
+            "interval",
+            hours=1,
+            next_run_time=datetime.now(EASTERN_TZ),
+            name="news-analyzer",
             max_instances=1,
         )
 
@@ -499,6 +515,28 @@ class ScalpingBot:
         except Exception as exc:  # noqa: BLE001
             logger.exception("Error during position monitoring: %s", exc)
             self.notifier.alert_error("position monitoring", exc)
+    
+    def _update_news(self) -> None:
+        """Update news analysis for watchlist tickers (runs hourly)."""
+        if not self.news_analyzer.is_configured():
+            logger.debug("News analyzer not configured - skipping")
+            return
+        
+        try:
+            watchlist_symbols = self.config.get('watchlist', {}).get('symbols', [])
+            if not watchlist_symbols:
+                return
+            
+            logger.info(f"📰 Updating news for {len(watchlist_symbols)} tickers...")
+            news_results = self.news_analyzer.analyze_watchlist(watchlist_symbols, hours=1)
+            
+            self.news_cache = news_results
+            self.news_last_updated = datetime.now(EASTERN_TZ)
+            
+            logger.info(f"✅ News updated: {len(news_results)} tickers analyzed")
+            
+        except Exception as exc:  # noqa: BLE001
+            logger.exception("Error updating news: %s", exc)
 
     # -------------------- Trade Execution --------------------
     def _execute_trade(self, signal_payload: Dict[str, Any]) -> None:
@@ -938,6 +976,20 @@ def api_force_close():
         return jsonify({'status': 'closed', 'message': 'Position closed successfully'})
     else:
         return jsonify({'status': 'failed', 'message': 'No position to close or error occurred'}), 400
+
+
+@app.route('/api/news')
+def api_news():
+    """Get latest news analysis for watchlist."""
+    bot = ScalpingBot._instance
+    if not bot:
+        return jsonify({'error': 'Bot not initialized'}), 503
+    
+    return jsonify({
+        'news': bot.news_cache,
+        'last_updated': bot.news_last_updated.isoformat() if bot.news_last_updated else None,
+        'configured': bot.news_analyzer.is_configured()
+    })
 
 
 @app.route('/api/market_status')

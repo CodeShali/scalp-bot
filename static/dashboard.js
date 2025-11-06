@@ -227,33 +227,8 @@ function updateDashboard() {
                 tickerInfo.innerHTML = '<div class="empty-state">AWAITING PRE-MARKET SCAN...</div>';
             }
             
-            // Display watchlist status
-            const watchlistStatus = document.getElementById('watchlistStatus');
-            if (data.watchlist && data.watchlist.length > 0) {
-                watchlistStatus.innerHTML = `
-                    <div style="background: rgba(0, 217, 255, 0.05); padding: 15px; border-radius: 4px; border: 1px solid #00d9ff;">
-                        <div style="font-size: 12px; color: #00d9ff; margin-bottom: 10px; font-weight: 700;">
-                            ⚡ MONITORING ${data.watchlist.length} TICKERS EVERY 5 SECONDS
-                        </div>
-                        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                            ${data.watchlist.map((ticker, idx) => {
-                                const colors = ['#00ff41', '#00d9ff', '#ffa500', '#ff00ff', '#ff4444'];
-                                const color = colors[idx % colors.length];
-                                return `
-                                    <div style="background: rgba(0, 0, 0, 0.3); padding: 8px 12px; border-left: 3px solid ${color}; border-radius: 4px;">
-                                        <div style="font-size: 14px; font-weight: 700; color: ${color};">${ticker}</div>
-                                    </div>
-                                `;
-                            }).join('')}
-                        </div>
-                        <div style="margin-top: 10px; font-size: 11px; color: #666;">
-                            Checking for: EMA crossover + RSI filter + Volume spike
-                        </div>
-                    </div>
-                `;
-            } else {
-                watchlistStatus.innerHTML = '<div class="empty-state">No watchlist configured</div>';
-            }
+            // Fetch and display news
+            updateNewsPanel();
             
             // Current position
             const positionInfo = document.getElementById('positionInfo');
@@ -544,6 +519,71 @@ document.addEventListener('DOMContentLoaded', () => {
     setInterval(updateDashboard, 10000); // Refresh every 10 seconds (reduced for ngrok free tier)
     setInterval(loadWatchlist, 60000); // Refresh watchlist every 60 seconds
 });
+
+// Update news panel
+async function updateNewsPanel() {
+    try {
+        const response = await fetch('/api/news');
+        if (!response.ok) return;
+        
+        const data = await response.json();
+        const newsPanel = document.getElementById('newsPanel');
+        
+        if (!data.configured) {
+            newsPanel.innerHTML = '<div class="empty-state">News analysis not configured (add OpenAI API key)</div>';
+            return;
+        }
+        
+        if (!data.news || data.news.length === 0) {
+            newsPanel.innerHTML = '<div class="empty-state">Loading news... (updates hourly)</div>';
+            return;
+        }
+        
+        const lastUpdated = data.last_updated ? new Date(data.last_updated).toLocaleTimeString() : 'Unknown';
+        
+        newsPanel.innerHTML = `
+            <div style="font-size: 10px; color: #666; margin-bottom: 10px;">
+                Last updated: ${lastUpdated} (updates hourly)
+            </div>
+            ${data.news.map(item => {
+                const sentimentColors = {
+                    'bullish': '#00ff41',
+                    'bearish': '#ff4444',
+                    'neutral': '#00d9ff'
+                };
+                const likelihoodColors = {
+                    'high': '#00ff41',
+                    'medium': '#ffa500',
+                    'low': '#666'
+                };
+                const sentimentColor = sentimentColors[item.sentiment] || '#00d9ff';
+                const likelihoodColor = likelihoodColors[item.entry_likelihood] || '#666';
+                
+                return `
+                    <div style="background: rgba(0, 0, 0, 0.3); padding: 10px; margin-bottom: 8px; border-left: 3px solid ${sentimentColor}; border-radius: 4px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                            <div style="font-size: 14px; font-weight: 700; color: ${sentimentColor};">${item.symbol}</div>
+                            <div style="display: flex; gap: 8px;">
+                                <span style="font-size: 10px; padding: 2px 6px; background: rgba(0,0,0,0.5); border-radius: 3px; color: ${sentimentColor};">
+                                    ${item.sentiment.toUpperCase()}
+                                </span>
+                                <span style="font-size: 10px; padding: 2px 6px; background: rgba(0,0,0,0.5); border-radius: 3px; color: ${likelihoodColor};">
+                                    ${item.entry_likelihood.toUpperCase()} ENTRY
+                                </span>
+                            </div>
+                        </div>
+                        <div style="font-size: 11px; color: #ccc; line-height: 1.4;">
+                            ${item.summary}
+                        </div>
+                        ${item.news_count ? `<div style="font-size: 9px; color: #666; margin-top: 5px;">${item.news_count} articles</div>` : ''}
+                    </div>
+                `;
+            }).join('')}
+        `;
+    } catch (error) {
+        console.error('Error updating news:', error);
+    }
+}
 
 // Settings functions
 async function loadSettings() {
