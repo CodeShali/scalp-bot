@@ -156,7 +156,7 @@ class DiscordNotifier:
         }
         self.send("", embeds=[embed])
     
-    def alert_startup(self, mode: str, next_scan_time: str = None) -> None:
+    def alert_startup(self, mode: str, next_scan_time: str = None, local_ip: str = None) -> None:
         """Send bot startup notification with dashboard link."""
         description = f"🚀 **TARA Scalp Bot** is now online and running in **{mode.upper()}** mode!\n\n"
         
@@ -165,14 +165,24 @@ class DiscordNotifier:
         
         description += f"🖥️ Access your dashboard below to monitor activity."
         
+        fields = [
+            {"name": "📊 Mode", "value": f"`{mode.upper()}`", "inline": True},
+            {"name": "⏰ Status", "value": "`Running`", "inline": True},
+        ]
+        
+        # Add local IP if provided
+        if local_ip:
+            fields.append({
+                "name": "🏠 Local Dashboard (WiFi)", 
+                "value": f"`{local_ip}`", 
+                "inline": False
+            })
+        
         embed = {
             "title": "✅ Bot Started Successfully",
             "description": description,
             "color": 3066993,  # Green
-            "fields": [
-                {"name": "📊 Mode", "value": f"`{mode.upper()}`", "inline": True},
-                {"name": "⏰ Status", "value": "`Running`", "inline": True},
-            ],
+            "fields": fields,
             "thumbnail": {
                 "url": "https://raw.githubusercontent.com/twitter/twemoji/master/assets/72x72/2705.png"
             },

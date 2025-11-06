@@ -238,9 +238,22 @@ class ScalpingBot:
         
         # Send startup notification with dashboard link
         if self.notifier.is_configured():
+            # Get local IP for WiFi access
+            import socket
+            local_ip_url = None
+            try:
+                s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                s.connect(("8.8.8.8", 80))
+                local_ip = s.getsockname()[0]
+                s.close()
+                local_ip_url = f"http://{local_ip}:8001"
+            except Exception:
+                pass
+            
             self.notifier.alert_startup(
                 mode=self.config.get("mode", "paper"),
-                next_scan_time="Continuous monitoring of watchlist"
+                next_scan_time="Continuous monitoring of watchlist",
+                local_ip=local_ip_url
             )
 
     def _register_jobs(self) -> None:
