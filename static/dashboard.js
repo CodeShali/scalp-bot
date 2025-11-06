@@ -516,8 +516,18 @@ document.addEventListener('DOMContentLoaded', () => {
     
     loadWatchlist();
     updateDashboard();
-    setInterval(updateDashboard, 30000); // Refresh every 30 seconds (ngrok free tier: 40 req/min limit)
-    setInterval(loadWatchlist, 120000); // Refresh watchlist every 2 minutes
+    // Polling intervals (adjust based on your setup):
+    // - With nginx/custom domain: 3s (fast, unlimited)
+    // - With ngrok free: 30s (slow, rate limited)
+    const isNgrok = window.location.hostname.includes('ngrok');
+    const dashboardInterval = isNgrok ? 30000 : 3000;  // 30s for ngrok, 3s for nginx
+    const watchlistInterval = isNgrok ? 120000 : 60000; // 2min for ngrok, 1min for nginx
+    
+    setInterval(updateDashboard, dashboardInterval);
+    setInterval(loadWatchlist, watchlistInterval);
+    
+    console.log(`Dashboard polling: ${dashboardInterval/1000}s (${isNgrok ? 'ngrok' : 'nginx/custom'} detected)`);
+
 });
 
 // Update news panel
