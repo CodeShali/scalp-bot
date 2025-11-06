@@ -73,10 +73,7 @@ signals:
   volume_lookback: 20
   lookback_minutes: 180
   poll_interval_seconds: 5  # Check every 5 seconds (was 15) - faster signal detection!
-  trading_windows:
-    - "09:30-10:30"  # Market open
-    - "12:00-13:00"  # Midday
-    - "15:00-16:00"  # Market close
+  trading_windows: []  # Empty = trade all market hours (9:30 AM - 4:00 PM). Maximize opportunities!
 
 # Trading Configuration
 trading:
