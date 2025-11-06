@@ -572,22 +572,33 @@ class ScalpingBot:
         symbol = signal_payload["symbol"]
         direction = signal_payload["direction"]
         underlying_price = self.broker.get_current_price(symbol)
+        
+        logger.info(f"🔍 Selecting option for {symbol} {direction.upper()}")
+        logger.info(f"   Underlying price: ${underlying_price:.2f}")
+        
         chain = self.broker.get_option_chain(symbol)
         if not chain:
+            logger.error(f"❌ No option chain available for {symbol}")
             return None
+        
+        logger.info(f"   Got {len(chain)} options in chain")
 
         trading_cfg = self.config.get("trading", {})
         max_dte_days = trading_cfg.get("max_option_dte_days", 1)
         now = datetime.utcnow()
         candidates = []
+        rejected_count = {"type": 0, "dte": 0, "strike": 0, "price": 0}
+        
         for option in chain:
             option_type = str(option.get("type") or option.get("option_type") or option.get("option_type"))
             if not option_type:
                 continue
             option_type = option_type.lower()
             if direction == "call" and option_type not in {"call", "c"}:
+                rejected_count["type"] += 1
                 continue
             if direction == "put" and option_type not in {"put", "p"}:
+                rejected_count["type"] += 1
                 continue
 
             strike_raw = option.get("strike") or option.get("strike_price")
@@ -604,14 +615,17 @@ class ScalpingBot:
                 continue
             dte = max((expiration - now).total_seconds() / 86400.0, 0)
             if dte > max_dte_days + 0.1:
+                rejected_count["dte"] += 1
                 continue
 
             penalty = self._strike_penalty(direction, strike, underlying_price)
             if penalty is None:
+                rejected_count["strike"] += 1
                 continue
 
             price = self._infer_option_price(option)
             if price is None or price <= 0:
+                rejected_count["price"] += 1
                 continue
 
             candidates.append(
@@ -625,11 +639,24 @@ class ScalpingBot:
                 }
             )
 
+        # Log rejection reasons
+        logger.info(f"   Rejection summary:")
+        logger.info(f"     Wrong type: {rejected_count['type']}")
+        logger.info(f"     DTE > {max_dte_days} days: {rejected_count['dte']}")
+        logger.info(f"     Strike out of range: {rejected_count['strike']}")
+        logger.info(f"     No/invalid price: {rejected_count['price']}")
+        logger.info(f"   ✅ Valid candidates: {len(candidates)}")
+        
         if not candidates:
+            logger.error(f"❌ No suitable options found for {symbol} {direction.upper()}")
+            logger.error(f"   Config: max_dte={max_dte_days}, atm_tolerance={trading_cfg.get('atm_tolerance_pct', 0.005)*100}%, max_otm={trading_cfg.get('max_otm_pct', 0.02)*100}%")
             return None
 
         candidates.sort(key=lambda opt: (abs(opt["dte"]), opt["penalty"]))
-        return candidates[0]
+        best = candidates[0]
+        logger.info(f"✅ Selected option: {best['symbol']}")
+        logger.info(f"   Strike: ${best['strike']:.2f}, DTE: {best['dte']:.1f}, Price: ${best['price']:.2f}")
+        return best
 
     def _strike_penalty(self, direction: str, strike: float, underlying_price: float) -> Optional[float]:
         trading_cfg = self.config.get("trading", {})
