@@ -575,6 +575,7 @@ class ScalpingBot:
         
         logger.info(f"🔍 Selecting option for {symbol} {direction.upper()}")
         logger.info(f"   Underlying price: ${underlying_price:.2f}")
+        logger.info(f"   Strategy: Nearest ATM strike on next expiring contract")
         
         chain = self.broker.get_option_chain(symbol)
         if not chain:
@@ -583,29 +584,29 @@ class ScalpingBot:
         
         logger.info(f"   Got {len(chain)} options in chain")
 
-        trading_cfg = self.config.get("trading", {})
-        max_dte_days = trading_cfg.get("max_option_dte_days", 1)
         now = datetime.utcnow()
         candidates = []
-        rejected_count = {"type": 0, "dte": 0, "strike": 0, "price": 0}
         
+        # Filter for correct option type and valid data
         for option in chain:
             option_type = str(option.get("type") or option.get("option_type") or option.get("option_type"))
             if not option_type:
                 continue
             option_type = option_type.lower()
+            
+            # Filter by option type (CALL or PUT)
             if direction == "call" and option_type not in {"call", "c"}:
-                rejected_count["type"] += 1
                 continue
             if direction == "put" and option_type not in {"put", "p"}:
-                rejected_count["type"] += 1
                 continue
 
+            # Get strike
             strike_raw = option.get("strike") or option.get("strike_price")
             if strike_raw is None:
                 continue
             strike = float(strike_raw)
 
+            # Get expiration
             expiration_raw = option.get("expiration") or option.get("expiration_date")
             if not expiration_raw:
                 continue
@@ -613,78 +614,44 @@ class ScalpingBot:
                 expiration = datetime.fromisoformat(expiration_raw)
             except ValueError:
                 continue
+            
+            # Calculate DTE
             dte = max((expiration - now).total_seconds() / 86400.0, 0)
-            if dte > max_dte_days + 0.1:
-                rejected_count["dte"] += 1
-                continue
 
-            penalty = self._strike_penalty(direction, strike, underlying_price)
-            if penalty is None:
-                rejected_count["strike"] += 1
-                continue
-
+            # Get price
             price = self._infer_option_price(option)
             if price is None or price <= 0:
-                rejected_count["price"] += 1
                 continue
 
-            candidates.append(
-                {
-                    "symbol": option.get("symbol"),
-                    "strike": strike,
-                    "expiration": expiration_raw,
-                    "price": price,
-                    "dte": dte,
-                    "penalty": penalty,
-                }
-            )
+            # Calculate how close strike is to ATM
+            strike_distance = abs(strike - underlying_price)
 
-        # Log rejection reasons
-        logger.info(f"   Rejection summary:")
-        logger.info(f"     Wrong type: {rejected_count['type']}")
-        logger.info(f"     DTE > {max_dte_days} days: {rejected_count['dte']}")
-        logger.info(f"     Strike out of range: {rejected_count['strike']}")
-        logger.info(f"     No/invalid price: {rejected_count['price']}")
-        logger.info(f"   ✅ Valid candidates: {len(candidates)}")
+            candidates.append({
+                "symbol": option.get("symbol"),
+                "strike": strike,
+                "expiration": expiration_raw,
+                "price": price,
+                "dte": dte,
+                "strike_distance": strike_distance,
+            })
         
         if not candidates:
-            logger.error(f"❌ No suitable options found for {symbol} {direction.upper()}")
-            logger.error(f"   Config: max_dte={max_dte_days}, atm_tolerance={trading_cfg.get('atm_tolerance_pct', 0.005)*100}%, max_otm={trading_cfg.get('max_otm_pct', 0.02)*100}%")
+            logger.error(f"❌ No valid options found for {symbol} {direction.upper()}")
             return None
 
-        candidates.sort(key=lambda opt: (abs(opt["dte"]), opt["penalty"]))
+        logger.info(f"   Found {len(candidates)} valid {direction.upper()} options")
+        
+        # Sort by: 1) Nearest expiration, 2) Closest to ATM
+        candidates.sort(key=lambda opt: (opt["dte"], opt["strike_distance"]))
+        
         best = candidates[0]
         logger.info(f"✅ Selected option: {best['symbol']}")
-        logger.info(f"   Strike: ${best['strike']:.2f}, DTE: {best['dte']:.1f}, Price: ${best['price']:.2f}")
+        logger.info(f"   Strike: ${best['strike']:.2f} (${best['strike_distance']:.2f} from ATM)")
+        logger.info(f"   Expiration: {best['expiration'][:10]} (DTE: {best['dte']:.1f})")
+        logger.info(f"   Price: ${best['price']:.2f}")
+        
         return best
 
-    def _strike_penalty(self, direction: str, strike: float, underlying_price: float) -> Optional[float]:
-        trading_cfg = self.config.get("trading", {})
-        max_otm_pct = trading_cfg.get("max_otm_pct", 0.02)
-        atm_tolerance_pct = trading_cfg.get("atm_tolerance_pct", 0.005)
-        if underlying_price <= 0:
-            return None
-
-        diff = strike - underlying_price
-        tolerance = underlying_price * atm_tolerance_pct
-        otm_limit = underlying_price * max_otm_pct
-
-        if direction == "call":
-            if diff < -tolerance:
-                return None  # materially ITM
-            if diff > otm_limit:
-                return None
-            return abs(diff)
-
-        if direction == "put":
-            diff = underlying_price - strike
-            if diff < -tolerance:
-                return None
-            if diff > otm_limit:
-                return None
-            return abs(diff)
-
-        return None
 
     def _infer_option_price(self, option: Dict[str, Any]) -> Optional[float]:
         ask = option.get("ask_price")
