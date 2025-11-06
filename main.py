@@ -71,9 +71,19 @@ class ScalpingBot:
             # Use ngrok
             self._ensure_ngrok_running()
         else:
-            # No ngrok, use localhost
-            self.ngrok_url = "http://localhost:8001"
-            logger.info("Using localhost (no ngrok)")
+            # No ngrok, get local IP for dashboard access
+            import socket
+            try:
+                # Get local IP address
+                s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                s.connect(("8.8.8.8", 80))
+                local_ip = s.getsockname()[0]
+                s.close()
+                self.ngrok_url = f"http://{local_ip}:8001"
+                logger.info(f"✅ Using local network: {self.ngrok_url}")
+            except Exception:
+                self.ngrok_url = "http://localhost:8001"
+                logger.info("Using localhost (no ngrok)")
         
         self.notifier = DiscordNotifier(self.config)
 
