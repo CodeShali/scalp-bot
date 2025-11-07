@@ -18,7 +18,7 @@ import pandas as pd
 
 from broker import BrokerClient
 from monitor import PositionMonitor
-from news_analyzer import NewsAnalyzer
+from news_sentiment import NewsSentimentAnalyzer
 from notifications import DiscordNotifier
 from signals import SignalDetector
 from utils import (
@@ -90,7 +90,7 @@ class ScalpingBot:
         self.broker = BrokerClient(self.config)
         self.signal_detector = SignalDetector(self.broker, self.notifier, self.config)
         self.monitor = PositionMonitor(self.broker, self.notifier, self.signal_detector, self.config)
-        self.news_analyzer = NewsAnalyzer(self.config)
+        self.news_sentiment = NewsSentimentAnalyzer(self.config)
 
         self.scheduler = BackgroundScheduler(timezone=EASTERN_TZ)
         
@@ -255,6 +255,14 @@ class ScalpingBot:
                 next_scan_time="Continuous monitoring of watchlist",
                 local_ip=local_ip_url
             )
+        
+        # Run initial news update so dashboard has data immediately
+        if self.news_sentiment.is_configured():
+            logger.info("📰 Running initial news sentiment analysis...")
+            try:
+                self._update_news()
+            except Exception as e:
+                logger.warning(f"Initial news update failed: {e}")
 
     def _register_jobs(self) -> None:
         # Register signal evaluation job (every 15 seconds during market hours)
@@ -540,9 +548,9 @@ class ScalpingBot:
             self.notifier.alert_error("position monitoring", exc)
     
     def _update_news(self) -> None:
-        """Update news analysis for watchlist tickers (runs hourly)."""
-        if not self.news_analyzer.is_configured():
-            logger.debug("News analyzer not configured - skipping")
+        """Update news sentiment for watchlist tickers (runs hourly + on startup)."""
+        if not self.news_sentiment.is_configured():
+            logger.debug("News sentiment analyzer not configured - skipping")
             return
         
         try:
@@ -550,16 +558,16 @@ class ScalpingBot:
             if not watchlist_symbols:
                 return
             
-            logger.info(f"📰 Updating news for {len(watchlist_symbols)} tickers...")
-            news_results = self.news_analyzer.analyze_watchlist(watchlist_symbols, hours=1)
+            logger.info(f"📰 Updating news sentiment for {len(watchlist_symbols)} tickers...")
+            news_results = self.news_sentiment.analyze_watchlist(watchlist_symbols)
             
             self.news_cache = news_results
             self.news_last_updated = datetime.now(EASTERN_TZ)
             
-            logger.info(f"✅ News updated: {len(news_results)} tickers analyzed")
+            logger.info(f"✅ News sentiment updated: {len(news_results)} tickers analyzed")
             
         except Exception as exc:  # noqa: BLE001
-            logger.exception("Error updating news: %s", exc)
+            logger.exception("Error updating news sentiment: %s", exc)
 
     # -------------------- Trade Execution --------------------
     def _execute_trade(self, signal_payload: Dict[str, Any]) -> None:
@@ -999,6 +1007,33 @@ def api_force_close():
         return jsonify({'status': 'closed', 'message': 'Position closed successfully'})
     else:
         return jsonify({'status': 'failed', 'message': 'No position to close or error occurred'}), 400
+
+
+@app.route('/api/news')
+def api_news():
+    """Get news sentiment analysis for watchlist."""
+    bot = ScalpingBot._instance
+    if not bot:
+        return jsonify({'error': 'Bot not initialized'}), 503
+    
+    try:
+        # Check if configured
+        if not bot.news_sentiment.is_configured():
+            return jsonify({
+                'configured': False,
+                'message': 'OpenAI API key not configured'
+            })
+        
+        # Return cached news data
+        return jsonify({
+            'configured': True,
+            'news': bot.news_cache or [],
+            'last_updated': bot.news_last_updated.isoformat() if bot.news_last_updated else None,
+            'count': len(bot.news_cache) if bot.news_cache else 0
+        })
+    except Exception as e:
+        logger.error(f"Error in /api/news: {e}")
+        return jsonify({'error': str(e)}), 500
 
 
 @app.route('/api/market_status')
