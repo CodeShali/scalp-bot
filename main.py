@@ -1001,20 +1001,6 @@ def api_force_close():
         return jsonify({'status': 'failed', 'message': 'No position to close or error occurred'}), 400
 
 
-@app.route('/api/news')
-def api_news():
-    """Get latest news analysis for watchlist."""
-    bot = ScalpingBot._instance
-    if not bot:
-        return jsonify({'error': 'Bot not initialized'}), 503
-    
-    return jsonify({
-        'news': bot.news_cache,
-        'last_updated': bot.news_last_updated.isoformat() if bot.news_last_updated else None,
-        'configured': bot.news_analyzer.is_configured()
-    })
-
-
 @app.route('/api/market_status')
 def api_market_status():
     """Get market status and timing information."""
