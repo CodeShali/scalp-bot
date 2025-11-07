@@ -251,23 +251,25 @@ input:checked + .toggle-slider:before { transform: translateX(26px); background-
 /* ============================================ */
 body.light-theme {
     background: #ffffff;
-    color: #1a1a1a;
+    color: #000000;
 }
 
 body.light-theme .header {
-    background: #f5f5f5;
-    border-color: #2c2c2c;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    background: #f8fafc;
+    border-color: #1e40af;
+    border-width: 3px;
+    box-shadow: 0 4px 12px rgba(30, 64, 175, 0.2);
 }
 
 body.light-theme .header-left h1 {
-    color: #1a1a1a;
+    color: #000000;
     text-shadow: none;
+    font-weight: 800;
 }
 
 body.light-theme .header-left .subtitle {
-    color: #d97706;
-    font-weight: 600;
+    color: #dc2626;
+    font-weight: 700;
 }
 
 body.light-theme .status-running {
@@ -285,70 +287,73 @@ body.light-theme .status-stopped {
 }
 
 body.light-theme .card {
-    background: #f9fafb;
-    border-color: #d1d5db;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    background: #f8fafc;
+    border-color: #1e40af;
+    border-width: 2px;
+    box-shadow: 0 2px 8px rgba(30, 64, 175, 0.15);
 }
 
 body.light-theme .card:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    border-color: #9ca3af;
+    box-shadow: 0 4px 16px rgba(30, 64, 175, 0.25);
+    border-color: #1e3a8a;
 }
 
 body.light-theme .card-title {
-    color: #1a1a1a;
-    border-color: #d1d5db;
+    color: #000000;
+    border-color: #1e40af;
+    border-width: 2px;
     text-shadow: none;
-    font-weight: 700;
+    font-weight: 800;
 }
 
 body.light-theme .stat-label {
-    color: #4b5563;
-    font-weight: 600;
+    color: #1e40af;
+    font-weight: 700;
 }
 
 body.light-theme .stat-value {
-    color: #1a1a1a;
-    font-weight: 700;
+    color: #000000;
+    font-weight: 800;
 }
 
 body.light-theme .status-value {
-    color: #1a1a1a;
+    color: #000000;
     text-shadow: none;
-    font-weight: 700;
+    font-weight: 800;
 }
 
 body.light-theme .status-label {
-    color: #4b5563;
-    font-weight: 600;
+    color: #1e40af;
+    font-weight: 700;
 }
 
 body.light-theme .limit-item span:first-child {
-    color: #4b5563;
-    font-weight: 600;
+    color: #1e40af;
+    font-weight: 700;
 }
 
 body.light-theme .limit-item span:last-child {
-    color: #1a1a1a;
-    font-weight: 700;
+    color: #000000;
+    font-weight: 800;
 }
 
 body.light-theme .positive {
     color: #15803d;
     text-shadow: none;
-    font-weight: 700;
+    font-weight: 800;
 }
 
 body.light-theme .negative {
     color: #dc2626;
     text-shadow: none;
-    font-weight: 700;
+    font-weight: 800;
 }
 
 body.light-theme .btn-success {
     color: #15803d;
     border-color: #15803d;
-    font-weight: 700;
+    border-width: 2px;
+    font-weight: 800;
 }
 
 body.light-theme .btn-success:hover {
@@ -357,20 +362,22 @@ body.light-theme .btn-success:hover {
 }
 
 body.light-theme .btn-warning {
-    color: #d97706;
-    border-color: #d97706;
-    font-weight: 700;
+    color: #ea580c;
+    border-color: #ea580c;
+    border-width: 2px;
+    font-weight: 800;
 }
 
 body.light-theme .btn-warning:hover {
-    background: #d97706;
+    background: #ea580c;
     color: #ffffff;
 }
 
 body.light-theme .btn-danger {
     color: #dc2626;
     border-color: #dc2626;
-    font-weight: 700;
+    border-width: 2px;
+    font-weight: 800;
 }
 
 body.light-theme .btn-danger:hover {
@@ -379,30 +386,33 @@ body.light-theme .btn-danger:hover {
 }
 
 body.light-theme .btn-info {
-    color: #0284c7;
-    border-color: #0284c7;
-    font-weight: 700;
+    color: #1e40af;
+    border-color: #1e40af;
+    border-width: 2px;
+    font-weight: 800;
 }
 
 body.light-theme .btn-info:hover {
-    background: #0284c7;
+    background: #1e40af;
     color: #ffffff;
 }
 
 body.light-theme .btn-modern-warning {
-    color: #d97706;
-    border-color: #d97706;
-    font-weight: 700;
+    color: #ea580c;
+    border-color: #ea580c;
+    border-width: 2px;
+    font-weight: 800;
 }
 
 body.light-theme .btn-modern-warning:hover {
-    background: rgba(217, 119, 6, 0.1);
+    background: rgba(234, 88, 12, 0.1);
 }
 
 body.light-theme .btn-modern-success {
     color: #15803d;
     border-color: #15803d;
-    font-weight: 700;
+    border-width: 2px;
+    font-weight: 800;
 }
 
 body.light-theme .btn-modern-success:hover {
@@ -412,7 +422,8 @@ body.light-theme .btn-modern-success:hover {
 body.light-theme .btn-modern-danger {
     color: #dc2626;
     border-color: #dc2626;
-    font-weight: 700;
+    border-width: 2px;
+    font-weight: 800;
 }
 
 body.light-theme .btn-modern-danger:hover {
@@ -420,34 +431,37 @@ body.light-theme .btn-modern-danger:hover {
 }
 
 body.light-theme .btn-modern-info {
-    color: #0284c7;
-    border-color: #0284c7;
-    font-weight: 700;
+    color: #1e40af;
+    border-color: #1e40af;
+    border-width: 2px;
+    font-weight: 800;
 }
 
 body.light-theme .btn-modern-info:hover {
-    background: rgba(2, 132, 199, 0.1);
+    background: rgba(30, 64, 175, 0.1);
 }
 
 body.light-theme .ticker-badge {
-    background: rgba(2, 132, 199, 0.1);
-    border-color: #0284c7;
-    color: #0284c7;
+    background: rgba(30, 64, 175, 0.1);
+    border-color: #1e40af;
+    border-width: 3px;
+    color: #1e40af;
     text-shadow: none;
-    font-weight: 700;
+    font-weight: 800;
 }
 
 body.light-theme .trades-table th {
-    background: #e5e7eb;
-    color: #1a1a1a;
-    border-color: #d1d5db;
-    font-weight: 700;
+    background: #dbeafe;
+    color: #000000;
+    border-color: #1e40af;
+    border-width: 2px;
+    font-weight: 800;
 }
 
 body.light-theme .trades-table td {
-    color: #374151;
-    border-color: #e5e7eb;
-    font-weight: 500;
+    color: #000000;
+    border-color: #93c5fd;
+    font-weight: 600;
 }
 
 body.light-theme .trades-table tr:hover td {
@@ -455,8 +469,9 @@ body.light-theme .trades-table tr:hover td {
 }
 
 body.light-theme .logs-container {
-    background: #f9fafb;
-    border-color: #d1d5db;
+    background: #f8fafc;
+    border-color: #1e40af;
+    border-width: 2px;
 }
 
 body.light-theme .log-line {
@@ -484,28 +499,28 @@ body.light-theme .log-debug {
 }
 
 body.light-theme .log-level-INFO {
-    color: #0284c7;
-    font-weight: 700;
+    color: #1e40af;
+    font-weight: 800;
 }
 
 body.light-theme .log-level-WARNING {
-    color: #d97706;
-    font-weight: 700;
+    color: #ea580c;
+    font-weight: 800;
 }
 
 body.light-theme .log-level-ERROR {
     color: #dc2626;
-    font-weight: 700;
+    font-weight: 800;
 }
 
 body.light-theme .log-level-DEBUG {
     color: #15803d;
-    font-weight: 700;
+    font-weight: 800;
 }
 
 body.light-theme .log-message {
-    color: #374151;
-    font-weight: 500;
+    color: #000000;
+    font-weight: 600;
 }
 
 body.light-theme .log-timestamp {
@@ -525,9 +540,10 @@ body.light-theme .refresh-time {
 
 body.light-theme .ticker-input {
     background: #ffffff;
-    border-color: #d1d5db;
-    color: #1a1a1a;
-    font-weight: 600;
+    border-color: #1e40af;
+    border-width: 2px;
+    color: #000000;
+    font-weight: 700;
 }
 
 body.light-theme .ticker-input::placeholder {
@@ -535,10 +551,11 @@ body.light-theme .ticker-input::placeholder {
 }
 
 body.light-theme .ticker-tag {
-    background: rgba(2, 132, 199, 0.1);
-    border-color: #0284c7;
-    color: #0284c7;
-    font-weight: 700;
+    background: rgba(30, 64, 175, 0.1);
+    border-color: #1e40af;
+    border-width: 2px;
+    color: #1e40af;
+    font-weight: 800;
 }
 
 body.light-theme .ticker-tag:hover {
@@ -743,8 +760,9 @@ body.light-theme .chart-btn.active {
 
 body.light-theme .market-status,
 body.light-theme .daily-limits {
-    background: #f9fafb;
-    border-color: #d1d5db;
+    background: #f8fafc;
+    border-color: #1e40af;
+    border-width: 2px;
 }
 
 body.light-theme ::-webkit-scrollbar-track {
